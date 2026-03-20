@@ -21,76 +21,104 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 ```text
 artifacts-monorepo/
 ├── artifacts/              # Deployable applications
-│   └── api-server/         # Express API server
+│   ├── api-server/         # Express API server
+│   └── mobile/             # Expo React Native app — UE5 Blueprints Academy
 ├── lib/                    # Shared libraries
 │   ├── api-spec/           # OpenAPI spec + Orval codegen config
 │   ├── api-client-react/   # Generated React Query hooks
 │   ├── api-zod/            # Generated Zod schemas from OpenAPI
 │   └── db/                 # Drizzle ORM schema + DB connection
-├── scripts/                # Utility scripts (single workspace package)
-│   └── src/                # Individual .ts scripts, run via `pnpm --filter @workspace/scripts run <script>`
-├── pnpm-workspace.yaml     # pnpm workspace (artifacts/*, lib/*, lib/integrations/*, scripts)
-├── tsconfig.base.json      # Shared TS options (composite, bundler resolution, es2022)
-├── tsconfig.json           # Root TS project references
-└── package.json            # Root package with hoisted devDeps
+├── scripts/                # Utility scripts
+├── pnpm-workspace.yaml
+├── tsconfig.base.json
+├── tsconfig.json
+└── package.json
 ```
+
+## UE5 Blueprints Academy (Mobile App)
+
+### Features
+- 8 learning modules covering beginner to expert Blueprint topics
+- 15+ lessons with full theory content, real-world examples, and practice tasks
+- Interactive quiz system with explanations and scoring
+- XP/level progression system with 10 levels
+- Achievement system with 8 badges
+- Streak tracking and daily goals
+- Module locking by XP requirement
+- 6 real-world example blueprints with step-by-step breakdowns
+- Favorites and "Review Later" bookmarking
+- Search and filter by difficulty
+- Dark theme styled after Unreal Engine 5
+- Local persistence via AsyncStorage
+
+### App Screens
+- **Home** — XP bar, stats, continue learning card, module overview
+- **Learn** — Full curriculum with search, filter, lesson list
+- **Examples** — Real-world Blueprint recipes with expandable steps
+- **Progress** — Module progress bars, achievements, stats grid
+- **Profile** — User rank, favorites, review later, settings
+- **Lesson** — Theory content, practice tab, complete & quiz actions
+- **Quiz** — Multiple choice with instant feedback and result review
+
+### Curriculum Modules
+1. What is Blueprint? (Beginner, 0 XP)
+2. Nodes & Execution (Beginner, 100 XP)
+3. Variables & Data Types (Beginner, 200 XP)
+4. Functions & Macros (Basic, 400 XP)
+5. Actor Communication (Intermediate, 700 XP)
+6. Gameplay Mechanics (Intermediate, 1100 XP)
+7. UI & Widget Blueprint (Intermediate, 1500 XP)
+8. AI Blueprint Basics (Advanced, 2000 XP)
+9. Optimization & Best Practices (Expert, 3000 XP)
+
+### Key Files
+- `artifacts/mobile/data/curriculum.ts` — All lesson content, quizzes, examples, achievements
+- `artifacts/mobile/context/ProgressContext.tsx` — XP, progress, and state management
+- `artifacts/mobile/app/(tabs)/` — Main tab screens
+- `artifacts/mobile/app/lesson/[id].tsx` — Lesson viewer
+- `artifacts/mobile/app/quiz/[id].tsx` — Quiz engine
+- `artifacts/mobile/constants/colors.ts` — Dark UE5 color theme
+
+## API Server
+
+Express 5 API server. Routes in `src/routes/` use `@workspace/api-zod` for validation.
+
+- Entry: `src/index.ts`
+- App: `src/app.ts`
+- Routes: `src/routes/index.ts`, `src/routes/health.ts`
 
 ## TypeScript & Composite Projects
 
-Every package extends `tsconfig.base.json` which sets `composite: true`. The root `tsconfig.json` lists all packages as project references. This means:
+Every package extends `tsconfig.base.json` with `composite: true`. Root `tsconfig.json` lists all lib packages as project references.
 
-- **Always typecheck from the root** — run `pnpm run typecheck` (which runs `tsc --build --emitDeclarationOnly`). This builds the full dependency graph so that cross-package imports resolve correctly. Running `tsc` inside a single package will fail if its dependencies haven't been built yet.
-- **`emitDeclarationOnly`** — we only emit `.d.ts` files during typecheck; actual JS bundling is handled by esbuild/tsx/vite...etc, not `tsc`.
-- **Project references** — when package A depends on package B, A's `tsconfig.json` must list B in its `references` array. `tsc --build` uses this to determine build order and skip up-to-date packages.
+- Always typecheck from root: `pnpm run typecheck`
+- `emitDeclarationOnly` — only `.d.ts` files during typecheck
+- Project references required for cross-package imports
 
 ## Root Scripts
 
-- `pnpm run build` — runs `typecheck` first, then recursively runs `build` in all packages that define it
-- `pnpm run typecheck` — runs `tsc --build --emitDeclarationOnly` using project references
+- `pnpm run build` — runs `typecheck` first, then recursively runs `build`
+- `pnpm run typecheck` — runs `tsc --build --emitDeclarationOnly`
 
 ## Packages
 
 ### `artifacts/api-server` (`@workspace/api-server`)
+Express 5 API server. Depends on: `@workspace/db`, `@workspace/api-zod`
 
-Express 5 API server. Routes live in `src/routes/` and use `@workspace/api-zod` for request and response validation and `@workspace/db` for persistence.
-
-- Entry: `src/index.ts` — reads `PORT`, starts Express
-- App setup: `src/app.ts` — mounts CORS, JSON/urlencoded parsing, routes at `/api`
-- Routes: `src/routes/index.ts` mounts sub-routers; `src/routes/health.ts` exposes `GET /health` (full path: `/api/health`)
-- Depends on: `@workspace/db`, `@workspace/api-zod`
-- `pnpm --filter @workspace/api-server run dev` — run the dev server
-- `pnpm --filter @workspace/api-server run build` — production esbuild bundle (`dist/index.cjs`)
-- Build bundles an allowlist of deps (express, cors, pg, drizzle-orm, zod, etc.) and externalizes the rest
+### `artifacts/mobile` (`@workspace/mobile`)
+Expo React Native app. UE5 Blueprints learning platform.
 
 ### `lib/db` (`@workspace/db`)
-
-Database layer using Drizzle ORM with PostgreSQL. Exports a Drizzle client instance and schema models.
-
-- `src/index.ts` — creates a `Pool` + Drizzle instance, exports schema
-- `src/schema/index.ts` — barrel re-export of all models
-- `src/schema/<modelname>.ts` — table definitions with `drizzle-zod` insert schemas (no models definitions exist right now)
-- `drizzle.config.ts` — Drizzle Kit config (requires `DATABASE_URL`, automatically provided by Replit)
-- Exports: `.` (pool, db, schema), `./schema` (schema only)
-
-Production migrations are handled by Replit when publishing. In development, we just use `pnpm --filter @workspace/db run push`, and we fallback to `pnpm --filter @workspace/db run push-force`.
+Database layer — Drizzle ORM with PostgreSQL.
 
 ### `lib/api-spec` (`@workspace/api-spec`)
-
-Owns the OpenAPI 3.1 spec (`openapi.yaml`) and the Orval config (`orval.config.ts`). Running codegen produces output into two sibling packages:
-
-1. `lib/api-client-react/src/generated/` — React Query hooks + fetch client
-2. `lib/api-zod/src/generated/` — Zod schemas
-
-Run codegen: `pnpm --filter @workspace/api-spec run codegen`
+OpenAPI 3.1 spec + Orval config. Run codegen: `pnpm --filter @workspace/api-spec run codegen`
 
 ### `lib/api-zod` (`@workspace/api-zod`)
-
-Generated Zod schemas from the OpenAPI spec (e.g. `HealthCheckResponse`). Used by `api-server` for response validation.
+Generated Zod schemas from the OpenAPI spec.
 
 ### `lib/api-client-react` (`@workspace/api-client-react`)
-
-Generated React Query hooks and fetch client from the OpenAPI spec (e.g. `useHealthCheck`, `healthCheck`).
+Generated React Query hooks and fetch client.
 
 ### `scripts` (`@workspace/scripts`)
-
-Utility scripts package. Each script is a `.ts` file in `src/` with a corresponding npm script in `package.json`. Run scripts via `pnpm --filter @workspace/scripts run <script>`. Scripts can import any workspace package (e.g., `@workspace/db`) by adding it as a dependency in `scripts/package.json`.
+Utility scripts package.
