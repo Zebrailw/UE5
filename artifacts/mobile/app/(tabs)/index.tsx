@@ -11,10 +11,7 @@ import {
   Text,
   View,
 } from "react-native";
-import Animated, {
-  FadeInDown,
-  FadeInUp,
-} from "react-native-reanimated";
+import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import Colors from "@/constants/colors";
@@ -32,20 +29,17 @@ function XPBar() {
     <View style={styles.xpBar}>
       <View style={styles.xpBarHeader}>
         <View style={styles.levelBadge}>
-          <Text style={styles.levelText}>Lv {level}</Text>
+          <Text style={styles.levelText}>Ур. {level}</Text>
         </View>
         <Text style={styles.xpText}>{xp.toLocaleString()} XP</Text>
       </View>
       <View style={styles.xpTrack}>
         <Animated.View
-          style={[
-            styles.xpFill,
-            { width: `${Math.round(progress.percentage * 100)}%` },
-          ]}
+          style={[styles.xpFill, { width: `${Math.round(progress.percentage * 100)}%` }]}
         />
       </View>
       <Text style={styles.xpSubText}>
-        {progress.current} / {progress.required} XP to next level
+        {progress.current} / {progress.required} XP до следующего уровня
       </Text>
     </View>
   );
@@ -80,8 +74,8 @@ function ContinueLearningCard() {
     return (
       <View style={styles.continueCard}>
         <Feather name="check-circle" size={24} color={C.success} />
-        <Text style={styles.continueTitle}>All caught up!</Text>
-        <Text style={styles.continueSubtitle}>You've completed all available lessons.</Text>
+        <Text style={styles.continueTitle}>Всё изучено!</Text>
+        <Text style={styles.continueSubtitle}>Вы завершили все доступные уроки.</Text>
       </View>
     );
   }
@@ -115,14 +109,14 @@ function ContinueLearningCard() {
       <View style={styles.continueFooter}>
         <View style={styles.continueInfo}>
           <Feather name="clock" size={13} color={C.textSecondary} />
-          <Text style={styles.continueInfoText}>{nextLesson.lesson.estimatedMinutes} min</Text>
+          <Text style={styles.continueInfoText}>{nextLesson.lesson.estimatedMinutes} мин</Text>
         </View>
         <View style={styles.continueInfo}>
           <Feather name="zap" size={13} color={C.warning} />
           <Text style={styles.continueInfoText}>+{nextLesson.lesson.xpReward} XP</Text>
         </View>
         <View style={styles.continueStartBtn}>
-          <Text style={styles.continueStartText}>Start</Text>
+          <Text style={styles.continueStartText}>Начать</Text>
           <Feather name="arrow-right" size={14} color={C.background} />
         </View>
       </View>
@@ -175,17 +169,15 @@ function ModuleCard({ mod, index }: { mod: typeof MODULES[0]; index: number }) {
           </View>
           <Text style={styles.moduleDesc} numberOfLines={1}>{mod.description}</Text>
           {unlocked ? (
-            <>
-              <View style={styles.moduleProgressRow}>
-                <View style={styles.moduleTrack}>
-                  <View style={[styles.moduleFill, { width: `${Math.round(progress * 100)}%`, backgroundColor: mod.color }]} />
-                </View>
-                <Text style={styles.modulePct}>{completedCount}/{mod.lessons.length}</Text>
+            <View style={styles.moduleProgressRow}>
+              <View style={styles.moduleTrack}>
+                <View style={[styles.moduleFill, { width: `${Math.round(progress * 100)}%`, backgroundColor: mod.color }]} />
               </View>
-            </>
+              <Text style={styles.modulePct}>{completedCount}/{mod.lessons.length}</Text>
+            </View>
           ) : (
             <Text style={styles.moduleLocked}>
-              Requires {mod.xpRequired.toLocaleString()} XP
+              Требуется {mod.xpRequired.toLocaleString()} XP
             </Text>
           )}
         </View>
@@ -198,8 +190,9 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { streak, dailyGoalCompleted, getTotalLessonsCompleted, xp } = useProgress();
   const totalCompleted = getTotalLessonsCompleted();
-
   const topPadding = Platform.OS === "web" ? 67 : insets.top;
+
+  const rank = xp >= 2000 ? "Мастер" : xp >= 1000 ? "Эксперт" : xp >= 500 ? "Про" : xp >= 200 ? "Базовый" : "Новичок";
 
   return (
     <View style={styles.container}>
@@ -213,9 +206,9 @@ export default function HomeScreen() {
       >
         <Animated.View entering={FadeInUp.duration(400)} style={styles.header}>
           <View>
-            <Text style={styles.headerGreeting}>Welcome back</Text>
+            <Text style={styles.headerGreeting}>С возвращением</Text>
             <Text style={styles.headerTitle}>UE5 Blueprints</Text>
-            <Text style={[styles.headerTitle, { color: C.tint }]}>Academy</Text>
+            <Text style={[styles.headerTitle, { color: C.tint }]}>Академия</Text>
           </View>
           <View style={styles.headerRight}>
             {dailyGoalCompleted && (
@@ -235,21 +228,21 @@ export default function HomeScreen() {
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(150)} style={styles.statsRow}>
-          <StatCard icon="book-open" value={String(totalCompleted)} label="Lessons" color={C.tint} />
-          <StatCard icon="zap" value={String(streak)} label="Day Streak" color={C.warning} />
-          <StatCard icon="award" value={xp >= 500 ? "Pro" : xp >= 200 ? "Basic" : "New"} label="Rank" color={C.accent} />
+          <StatCard icon="book-open" value={String(totalCompleted)} label="Уроков" color={C.tint} />
+          <StatCard icon="zap" value={String(streak)} label="Дней подряд" color={C.warning} />
+          <StatCard icon="award" value={rank} label="Ранг" color={C.accent} />
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(200)}>
-          <Text style={styles.sectionTitle}>Continue Learning</Text>
+          <Text style={styles.sectionTitle}>Продолжить обучение</Text>
           <ContinueLearningCard />
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(250)}>
           <View style={styles.sectionHeaderRow}>
-            <Text style={styles.sectionTitle}>All Modules</Text>
+            <Text style={styles.sectionTitle}>Все модули</Text>
             <Pressable onPress={() => router.push("/learn")}>
-              <Text style={styles.seeAll}>See all</Text>
+              <Text style={styles.seeAll}>Все →</Text>
             </Pressable>
           </View>
           {MODULES.map((mod, i) => (
@@ -301,11 +294,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     gap: 4,
   },
-  streakText: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 14,
-    color: C.warning,
-  },
+  streakText: { fontFamily: "Inter_700Bold", fontSize: 14, color: C.warning },
   xpBar: {
     backgroundColor: C.card,
     borderRadius: 16,
@@ -326,38 +315,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 4,
   },
-  levelText: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 13,
-    color: C.tint,
-  },
-  xpText: {
-    fontFamily: "Inter_600SemiBold",
-    fontSize: 14,
-    color: C.text,
-  },
+  levelText: { fontFamily: "Inter_700Bold", fontSize: 13, color: C.tint },
+  xpText: { fontFamily: "Inter_600SemiBold", fontSize: 14, color: C.text },
   xpTrack: {
     height: 8,
     backgroundColor: C.backgroundTertiary,
     borderRadius: 4,
     overflow: "hidden",
   },
-  xpFill: {
-    height: "100%",
-    backgroundColor: C.tint,
-    borderRadius: 4,
-  },
-  xpSubText: {
-    fontFamily: "Inter_400Regular",
-    fontSize: 12,
-    color: C.textSecondary,
-    marginTop: 6,
-  },
-  statsRow: {
-    flexDirection: "row",
-    gap: 12,
-    marginBottom: 24,
-  },
+  xpFill: { height: "100%", backgroundColor: C.tint, borderRadius: 4 },
+  xpSubText: { fontFamily: "Inter_400Regular", fontSize: 12, color: C.textSecondary, marginTop: 6 },
+  statsRow: { flexDirection: "row", gap: 12, marginBottom: 24 },
   statCard: {
     flex: 1,
     backgroundColor: C.card,
@@ -367,21 +335,9 @@ const styles = StyleSheet.create({
     gap: 6,
     borderWidth: 1,
   },
-  statValue: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 18,
-  },
-  statLabel: {
-    fontFamily: "Inter_400Regular",
-    fontSize: 11,
-    color: C.textSecondary,
-  },
-  sectionTitle: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 18,
-    color: C.text,
-    marginBottom: 14,
-  },
+  statValue: { fontFamily: "Inter_700Bold", fontSize: 16 },
+  statLabel: { fontFamily: "Inter_400Regular", fontSize: 10, color: C.textSecondary, textAlign: "center" },
+  sectionTitle: { fontFamily: "Inter_700Bold", fontSize: 18, color: C.text, marginBottom: 14 },
   sectionHeaderRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -389,11 +345,7 @@ const styles = StyleSheet.create({
     marginBottom: 14,
     marginTop: 8,
   },
-  seeAll: {
-    fontFamily: "Inter_500Medium",
-    fontSize: 14,
-    color: C.tint,
-  },
+  seeAll: { fontFamily: "Inter_500Medium", fontSize: 14, color: C.tint },
   continueCard: {
     backgroundColor: C.card,
     borderRadius: 20,
@@ -403,37 +355,12 @@ const styles = StyleSheet.create({
     borderColor: C.cardBorder,
     overflow: "hidden",
   },
-  continueHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 10,
-    gap: 8,
-  },
-  continueDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  continueModule: {
-    fontFamily: "Inter_600SemiBold",
-    fontSize: 12,
-    flex: 1,
-  },
-  diffBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
-  diffText: {
-    fontFamily: "Inter_600SemiBold",
-    fontSize: 11,
-  },
-  continueTitle: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 17,
-    color: C.text,
-    marginBottom: 6,
-  },
+  continueHeader: { flexDirection: "row", alignItems: "center", marginBottom: 10, gap: 8 },
+  continueDot: { width: 8, height: 8, borderRadius: 4 },
+  continueModule: { fontFamily: "Inter_600SemiBold", fontSize: 12, flex: 1 },
+  diffBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
+  diffText: { fontFamily: "Inter_600SemiBold", fontSize: 11 },
+  continueTitle: { fontFamily: "Inter_700Bold", fontSize: 17, color: C.text, marginBottom: 6 },
   continueSubtitle: {
     fontFamily: "Inter_400Regular",
     fontSize: 14,
@@ -441,21 +368,9 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     marginBottom: 16,
   },
-  continueFooter: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  continueInfo: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-  continueInfoText: {
-    fontFamily: "Inter_400Regular",
-    fontSize: 13,
-    color: C.textSecondary,
-  },
+  continueFooter: { flexDirection: "row", alignItems: "center", gap: 12 },
+  continueInfo: { flexDirection: "row", alignItems: "center", gap: 4 },
+  continueInfoText: { fontFamily: "Inter_400Regular", fontSize: 13, color: C.textSecondary },
   continueStartBtn: {
     flexDirection: "row",
     alignItems: "center",
@@ -466,11 +381,7 @@ const styles = StyleSheet.create({
     gap: 6,
     marginLeft: "auto",
   },
-  continueStartText: {
-    fontFamily: "Inter_600SemiBold",
-    fontSize: 13,
-    color: C.background,
-  },
+  continueStartText: { fontFamily: "Inter_600SemiBold", fontSize: 13, color: C.background },
   moduleCard: {
     flexDirection: "row",
     backgroundColor: C.card,
@@ -483,9 +394,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 14,
   },
-  moduleCardLocked: {
-    opacity: 0.55,
-  },
+  moduleCardLocked: { opacity: 0.55 },
   moduleCardLeft: {},
   moduleIconBox: {
     width: 44,
@@ -503,44 +412,12 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 4,
   },
-  moduleTitle: {
-    fontFamily: "Inter_600SemiBold",
-    fontSize: 15,
-    color: C.text,
-    flex: 1,
-    marginRight: 8,
-  },
+  moduleTitle: { fontFamily: "Inter_600SemiBold", fontSize: 15, color: C.text, flex: 1, marginRight: 8 },
   moduleTitleLocked: { color: C.textTertiary },
-  moduleDesc: {
-    fontFamily: "Inter_400Regular",
-    fontSize: 12,
-    color: C.textSecondary,
-    marginBottom: 8,
-  },
-  moduleProgressRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  moduleTrack: {
-    flex: 1,
-    height: 4,
-    backgroundColor: C.backgroundTertiary,
-    borderRadius: 2,
-    overflow: "hidden",
-  },
-  moduleFill: {
-    height: "100%",
-    borderRadius: 2,
-  },
-  modulePct: {
-    fontFamily: "Inter_500Medium",
-    fontSize: 11,
-    color: C.textSecondary,
-  },
-  moduleLocked: {
-    fontFamily: "Inter_400Regular",
-    fontSize: 11,
-    color: C.textTertiary,
-  },
+  moduleDesc: { fontFamily: "Inter_400Regular", fontSize: 12, color: C.textSecondary, marginBottom: 8 },
+  moduleProgressRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  moduleTrack: { flex: 1, height: 4, backgroundColor: C.backgroundTertiary, borderRadius: 2, overflow: "hidden" },
+  moduleFill: { height: "100%", borderRadius: 2 },
+  modulePct: { fontFamily: "Inter_500Medium", fontSize: 11, color: C.textSecondary },
+  moduleLocked: { fontFamily: "Inter_400Regular", fontSize: 11, color: C.textTertiary },
 });

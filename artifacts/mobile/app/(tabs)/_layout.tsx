@@ -17,23 +17,23 @@ function NativeTabLayout() {
     <NativeTabs>
       <NativeTabs.Trigger name="index">
         <Icon sf={{ default: "house", selected: "house.fill" }} />
-        <Label>Home</Label>
+        <Label>Главная</Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="learn">
         <Icon sf={{ default: "book", selected: "book.fill" }} />
-        <Label>Learn</Label>
+        <Label>Учёба</Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="examples">
         <Icon sf={{ default: "lightbulb", selected: "lightbulb.fill" }} />
-        <Label>Examples</Label>
+        <Label>Примеры</Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="progress">
         <Icon sf={{ default: "chart.bar", selected: "chart.bar.fill" }} />
-        <Label>Progress</Label>
+        <Label>Прогресс</Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="profile">
         <Icon sf={{ default: "person", selected: "person.fill" }} />
-        <Label>Profile</Label>
+        <Label>Профиль</Label>
       </NativeTabs.Trigger>
     </NativeTabs>
   );
@@ -61,11 +61,7 @@ function ClassicTabLayout() {
         },
         tabBarBackground: () =>
           isIOS ? (
-            <BlurView
-              intensity={80}
-              tint="dark"
-              style={StyleSheet.absoluteFill}
-            />
+            <BlurView intensity={80} tint="dark" style={StyleSheet.absoluteFill} />
           ) : isWeb ? (
             <View
               style={[
@@ -79,7 +75,7 @@ function ClassicTabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: "Home",
+          title: "Главная",
           tabBarIcon: ({ color }) =>
             isIOS ? (
               <SymbolView name="house.fill" tintColor={color} size={22} />
@@ -91,7 +87,7 @@ function ClassicTabLayout() {
       <Tabs.Screen
         name="learn"
         options={{
-          title: "Learn",
+          title: "Учёба",
           tabBarIcon: ({ color }) =>
             isIOS ? (
               <SymbolView name="book.fill" tintColor={color} size={22} />
@@ -103,7 +99,7 @@ function ClassicTabLayout() {
       <Tabs.Screen
         name="examples"
         options={{
-          title: "Examples",
+          title: "Примеры",
           tabBarIcon: ({ color }) =>
             isIOS ? (
               <SymbolView name="lightbulb.fill" tintColor={color} size={22} />
@@ -115,7 +111,7 @@ function ClassicTabLayout() {
       <Tabs.Screen
         name="progress"
         options={{
-          title: "Progress",
+          title: "Прогресс",
           tabBarIcon: ({ color }) =>
             isIOS ? (
               <SymbolView name="chart.bar.fill" tintColor={color} size={22} />
@@ -127,7 +123,7 @@ function ClassicTabLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: "Profile",
+          title: "Профиль",
           tabBarIcon: ({ color }) =>
             isIOS ? (
               <SymbolView name="person.fill" tintColor={color} size={22} />

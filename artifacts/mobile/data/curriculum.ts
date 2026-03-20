@@ -8,6 +8,37 @@ export interface QuizQuestion {
   explanation: string;
 }
 
+export interface BuildPin {
+  id: string;
+  label: string;
+  type: "exec" | "bool" | "float" | "integer" | "string" | "object" | "vector";
+}
+
+export interface BuildNode {
+  id: string;
+  title: string;
+  subtitle?: string;
+  nodeType: "event" | "function" | "flow" | "value" | "variable";
+  inputs: BuildPin[];
+  outputs: BuildPin[];
+  x: number;
+  y: number;
+}
+
+export interface BuildConnection {
+  fromNodeId: string;
+  fromPinId: string;
+  toNodeId: string;
+  toPinId: string;
+}
+
+export interface BuildChallenge {
+  instruction: string;
+  hint: string;
+  nodes: BuildNode[];
+  solution: BuildConnection[];
+}
+
 export interface Lesson {
   id: string;
   moduleId: string;
@@ -20,6 +51,7 @@ export interface Lesson {
   practiceTask?: string;
   realWorldExample?: string;
   tags: string[];
+  buildChallenge?: BuildChallenge;
 }
 
 export interface Module {
@@ -33,11 +65,33 @@ export interface Module {
   xpRequired: number;
 }
 
+export const getDifficultyLabel = (d: Difficulty): string => {
+  const map: Record<Difficulty, string> = {
+    beginner: "Начинающий",
+    basic: "Базовый",
+    intermediate: "Средний",
+    advanced: "Продвинутый",
+    expert: "Эксперт",
+  };
+  return map[d];
+};
+
+export const getDifficultyColor = (d: Difficulty): string => {
+  const map: Record<Difficulty, string> = {
+    beginner: "#00D4FF",
+    basic: "#39D353",
+    intermediate: "#FFB800",
+    advanced: "#FF6B35",
+    expert: "#FF4757",
+  };
+  return map[d];
+};
+
 export const MODULES: Module[] = [
   {
     id: "mod_intro",
-    title: "What is Blueprint?",
-    description: "Understand Unreal Engine's visual scripting system from scratch",
+    title: "Что такое Blueprint?",
+    description: "Понимаем визуальную систему скриптинга Unreal Engine с нуля",
     icon: "grid",
     difficulty: "beginner",
     color: "#00D4FF",
@@ -46,87 +100,193 @@ export const MODULES: Module[] = [
       {
         id: "les_001",
         moduleId: "mod_intro",
-        title: "Introduction to Blueprints",
-        description: "Learn what Blueprint is and why it's powerful",
-        content: "Blueprint is Unreal Engine 5's visual scripting system that allows you to create game logic without writing C++ code. Instead of text-based code, you connect nodes together in a graph — each node performs a specific action or returns a value.\n\nBlueprint uses an event-driven programming model. Your code doesn't run from top to bottom — it runs in response to events like 'Begin Play', 'On Hit', or 'Tick'.\n\n**Key concepts:**\n• Nodes — The building blocks of Blueprint logic\n• Pins — Connection points on nodes (input/output)\n• Wires — Lines connecting pins between nodes\n• Events — Special nodes that trigger execution\n• Variables — Store and retrieve data\n\nBlueprints compile to bytecode at runtime, making them fast enough for most gameplay logic. For performance-critical systems, you can expose Blueprint functions to C++ or migrate later.",
+        title: "Введение в Blueprint",
+        description: "Узнайте, что такое Blueprint и почему это мощный инструмент",
+        content:
+          "Blueprint — визуальная система скриптинга Unreal Engine 5, позволяющая создавать игровую логику без написания кода на C++. Вместо текстового кода вы соединяете узлы (ноды) в граф — каждый узел выполняет определённое действие или возвращает значение.\n\nBlueprint использует событийно-ориентированную модель программирования. Код не выполняется сверху вниз — он запускается в ответ на события: «Begin Play», «On Hit», «Tick» и другие.\n\n**Ключевые концепции:**\n• Узлы (Nodes) — строительные блоки логики Blueprint\n• Пины (Pins) — точки соединения на узлах (вход/выход)\n• Провода (Wires) — линии, соединяющие пины между узлами\n• События (Events) — специальные узлы, запускающие выполнение\n• Переменные (Variables) — хранение и получение данных\n\nBlueprint компилируется в байткод во время выполнения, что делает его достаточно быстрым для большинства игровой логики.",
         xpReward: 100,
         estimatedMinutes: 8,
-        tags: ["basics", "intro"],
-        realWorldExample: "Every major AAA game built with UE5 uses Blueprint for rapid prototyping — even teams with dedicated C++ programmers use Blueprint for gameplay scripting.",
-        practiceTask: "Open Unreal Engine, create a new Blueprint Actor, and explore the Event Graph. Find the BeginPlay and Tick events.",
+        tags: ["основы", "введение"],
+        realWorldExample:
+          "Каждая крупная AAA-игра на UE5 использует Blueprint для быстрого прототипирования — даже команды с программистами на C++ применяют Blueprint для геймплейного скриптинга.",
+        practiceTask:
+          "Откройте Unreal Engine, создайте новый Blueprint Actor и изучите Event Graph. Найдите события BeginPlay и Tick.",
         quizQuestions: [
           {
             id: "q001",
-            question: "What is the main purpose of Blueprint in Unreal Engine?",
+            question: "Какова основная цель Blueprint в Unreal Engine?",
             options: [
-              "To replace the entire C++ engine",
-              "To create game logic visually without writing code",
-              "Only for creating UI menus",
-              "To optimize rendering performance"
+              "Полностью заменить движок C++",
+              "Создавать игровую логику визуально без написания кода",
+              "Только для создания меню интерфейса",
+              "Оптимизировать производительность рендеринга",
             ],
             correctIndex: 1,
-            explanation: "Blueprint is a visual scripting system that lets you create game logic by connecting nodes, without writing C++ code."
+            explanation:
+              "Blueprint — визуальная система скриптинга, позволяющая создавать игровую логику соединением узлов без написания кода на C++.",
           },
           {
             id: "q002",
-            question: "What connects nodes together in a Blueprint graph?",
-            options: ["Cables", "Wires", "Bridges", "Channels"],
+            question: "Что соединяет узлы в Blueprint-графе?",
+            options: ["Кабели", "Провода", "Мосты", "Каналы"],
             correctIndex: 1,
-            explanation: "Wires are the lines that connect pins between nodes, creating the flow of logic in Blueprint."
+            explanation:
+              "Провода — линии, соединяющие пины между узлами, создавая поток логики в Blueprint.",
           },
           {
             id: "q003",
-            question: "How does Blueprint execute code?",
+            question: "Как Blueprint выполняет код?",
             options: [
-              "From top to bottom like Python",
-              "Randomly",
-              "In response to events",
-              "Only on button press"
+              "Сверху вниз, как обычный скрипт",
+              "Только при нажатии кнопки воспроизведения",
+              "В ответ на события, такие как BeginPlay или OnHit",
+              "Непрерывно в фоновом потоке",
             ],
             correctIndex: 2,
-            explanation: "Blueprint uses an event-driven model — code runs when specific events occur like BeginPlay, Tick, or OnHit."
-          }
-        ]
+            explanation:
+              "Blueprint использует событийно-ориентированное программирование — логика запускается событиями, а не выполняется последовательно.",
+          },
+        ],
+        buildChallenge: {
+          instruction:
+            "Соедините событие BeginPlay с узлом Print String, чтобы при старте игры выводилось сообщение в лог.",
+          hint:
+            "Нажмите на выходной пин Exec события BeginPlay, затем на входной пин Exec узла Print String.",
+          nodes: [
+            {
+              id: "n1",
+              title: "Event BeginPlay",
+              nodeType: "event",
+              inputs: [],
+              outputs: [{ id: "exec_out", label: "Exec", type: "exec" }],
+              x: 20,
+              y: 80,
+            },
+            {
+              id: "n2",
+              title: "Print String",
+              nodeType: "function",
+              inputs: [
+                { id: "exec_in", label: "Exec", type: "exec" },
+                { id: "str_in", label: "In String", type: "string" },
+              ],
+              outputs: [{ id: "exec_out", label: "Exec", type: "exec" }],
+              x: 220,
+              y: 60,
+            },
+          ],
+          solution: [
+            {
+              fromNodeId: "n1",
+              fromPinId: "exec_out",
+              toNodeId: "n2",
+              toPinId: "exec_in",
+            },
+          ],
+        },
       },
       {
         id: "les_002",
         moduleId: "mod_intro",
-        title: "Blueprint Types",
-        description: "Actor BP, Level BP, Widget BP — know the difference",
-        content: "Unreal Engine has several types of Blueprints, each serving a different purpose:\n\n**Actor Blueprint** — The most common type. Represents any object that can be placed in the world — characters, props, doors, enemies. This is where most gameplay logic lives.\n\n**Level Blueprint** — One per level. Used for level-specific scripting like cutscenes, opening sequences, or one-off events. Avoid putting reusable logic here.\n\n**Widget Blueprint** — For creating UI (HUD, menus, inventory screens). Uses a visual designer alongside Blueprint logic.\n\n**Animation Blueprint** — Controls animation state machines for characters. Runs on the animation thread for performance.\n\n**Game Mode Blueprint** — Defines rules of your game: scoring, win/lose conditions, default player class.\n\n**Player Controller Blueprint** — Handles player input and translates it into game actions.\n\n**Game Instance Blueprint** — Persists across level loads. Perfect for storing player data, save game state, or global settings.",
+        title: "Типы Blueprint",
+        description: "Изучите разные типы Blueprint и когда их использовать",
+        content:
+          "В Unreal Engine 5 существует несколько типов Blueprint, каждый для определённых задач:\n\n**Blueprint Actor:**\nСамый распространённый тип. Это объект, который можно разместить на уровне. Имеет компоненты (меш, коллизия), трансформацию (позиция, поворот, масштаб) и Event Graph.\n\n**Blueprint Actor Component:**\nПереиспользуемые модули поведения, которые добавляются к Actor-ам. Например, компонент здоровья, компонент инвентаря.\n\n**Blueprint Function Library:**\nСтатические функции без состояния — утилиты, доступные из любого Blueprint. Идеальны для математических функций, форматирования строк.\n\n**Blueprint Interface:**\nОпределяет набор функций без реализации. Actor-ы «реализуют» интерфейс — позволяет общаться между объектами разных типов.\n\n**Blueprint Macro Library:**\nМногократно используемые группы узлов. Как функции, но раскрываются inline при компиляции.\n\n**Анатомия Blueprint:**\n• Event Graph — основной граф логики\n• Functions — переиспользуемые функции\n• Variables — хранение данных\n• Components — иерархия компонентов",
         xpReward: 120,
         estimatedMinutes: 10,
-        tags: ["basics", "types"],
-        realWorldExample: "A door that opens when a player presses E uses an Actor Blueprint. The HUD showing health is a Widget Blueprint. Game rules are in Game Mode Blueprint.",
-        practiceTask: "In UE5, right-click in the Content Browser and explore the Blueprint submenu. Notice the different Blueprint types available.",
+        tags: ["типы", "actor", "компоненты"],
+        realWorldExample:
+          "В шутере оружие — Blueprint Actor, система здоровья — Actor Component, утилиты урона — Function Library, а враги и игрок общаются через Blueprint Interface.",
+        practiceTask:
+          "Создайте Blueprint Actor с StaticMesh-компонентом. Добавьте переменную float «Health» со значением 100. Изучите панель компонентов.",
         quizQuestions: [
           {
             id: "q004",
-            question: "Which Blueprint type persists across level loads?",
-            options: ["Actor Blueprint", "Level Blueprint", "Game Instance Blueprint", "Widget Blueprint"],
+            question: "Какой тип Blueprint лучше всего подходит для создания объектов, размещаемых на уровне?",
+            options: [
+              "Blueprint Function Library",
+              "Blueprint Interface",
+              "Blueprint Actor",
+              "Blueprint Macro Library",
+            ],
             correctIndex: 2,
-            explanation: "Game Instance Blueprint is created once and persists throughout the entire game session, surviving level transitions."
+            explanation:
+              "Blueprint Actor — это объект, который можно разместить на уровне. Он имеет трансформацию и компоненты.",
           },
           {
             id: "q005",
-            question: "What is a Widget Blueprint used for?",
+            question: "Что такое Blueprint Interface?",
             options: [
-              "Enemy AI behavior",
-              "Creating UI elements like HUD and menus",
-              "Physics calculations",
-              "Sound management"
+              "Визуальный редактор для создания UI",
+              "Набор функций без реализации для коммуникации между объектами",
+              "Тип переменной для хранения ссылок на объекты",
+              "Оптимизированная версия Blueprint Actor",
             ],
             correctIndex: 1,
-            explanation: "Widget Blueprint is specifically designed for creating user interface elements — health bars, menus, inventory screens, etc."
-          }
-        ]
-      }
-    ]
+            explanation:
+              "Blueprint Interface определяет функции без реализации. Actor-ы реализуют интерфейс для коммуникации между разными типами объектов.",
+          },
+          {
+            id: "q006",
+            question: "Где хранится основная игровая логика Blueprint Actor?",
+            options: ["В панели деталей", "В Event Graph", "В менеджере контента", "В файле конфигурации"],
+            correctIndex: 1,
+            explanation: "Event Graph — основное рабочее пространство Blueprint Actor, где создаётся игровая логика через соединение узлов.",
+          },
+        ],
+        buildChallenge: {
+          instruction:
+            "Создайте логику инициализации: соедините BeginPlay → Set Health (переменная) → Print String. Значение переменной должно быть передано в Print String.",
+          hint:
+            "Сначала соедините BeginPlay с Set Health, затем Set Health с Print String. Переменная Health передаёт своё значение в строку.",
+          nodes: [
+            {
+              id: "n1",
+              title: "Event BeginPlay",
+              nodeType: "event",
+              inputs: [],
+              outputs: [{ id: "exec", label: "Exec", type: "exec" }],
+              x: 10,
+              y: 40,
+            },
+            {
+              id: "n2",
+              title: "Set Health",
+              subtitle: "Variable",
+              nodeType: "variable",
+              inputs: [
+                { id: "exec", label: "Exec", type: "exec" },
+                { id: "val", label: "Health", type: "float" },
+              ],
+              outputs: [{ id: "exec", label: "Exec", type: "exec" }],
+              x: 190,
+              y: 20,
+            },
+            {
+              id: "n3",
+              title: "Print String",
+              nodeType: "function",
+              inputs: [
+                { id: "exec", label: "Exec", type: "exec" },
+                { id: "str", label: "String", type: "string" },
+              ],
+              outputs: [{ id: "exec", label: "Exec", type: "exec" }],
+              x: 370,
+              y: 40,
+            },
+          ],
+          solution: [
+            { fromNodeId: "n1", fromPinId: "exec", toNodeId: "n2", toPinId: "exec" },
+            { fromNodeId: "n2", fromPinId: "exec", toNodeId: "n3", toPinId: "exec" },
+          ],
+        },
+      },
+    ],
   },
   {
     id: "mod_nodes",
-    title: "Nodes & Execution",
-    description: "Master the building blocks: node types, execution flow, and pins",
+    title: "Узлы и Выполнение",
+    description: "Как работают узлы, пины и поток выполнения в Blueprint",
     icon: "cpu",
     difficulty: "beginner",
     color: "#7B4FFF",
@@ -135,73 +295,190 @@ export const MODULES: Module[] = [
       {
         id: "les_003",
         moduleId: "mod_nodes",
-        title: "Node Types",
-        description: "Function nodes, event nodes, variable nodes, pure nodes",
-        content: "Understanding node types is fundamental to Blueprint mastery.\n\n**Event Nodes** (Red header) — Start execution chains. Examples: BeginPlay, Tick, OnHit. They have a white execution output pin.\n\n**Function Nodes** (Blue header) — Perform actions and can return values. Examples: Print String, Spawn Actor, Get Player Character.\n\n**Pure Nodes** (Green, no execution pins) — Return values without side effects. Examples: math operations, Get Actor Location, comparisons. They run whenever their output is needed.\n\n**Macro Nodes** (Purple header) — Reusable groups of nodes with multiple inputs/outputs.\n\n**Variable Nodes** — Get or Set variable values.\n\n**Comment Nodes** — Group and document your Blueprint logic (press C to create).\n\n**Pins explained:**\n• White pins = Execution flow\n• Blue pins = Object references\n• Green pins = Boolean\n• Yellow pins = Integer/Float\n• Pink pins = String\n• Cyan pins = Struct",
-        xpReward: 150,
-        estimatedMinutes: 12,
-        tags: ["nodes", "flow"],
-        realWorldExample: "Get Player Character is a Pure node because it just returns a value. Destroy Actor is a Function node because it has a side effect.",
+        title: "Понимание узлов",
+        description: "Анатомия узлов Blueprint и как они работают",
+        content:
+          "Каждый узел Blueprint имеет определённую структуру. Понимание этой структуры — ключ к построению эффективной логики.\n\n**Анатомия узла:**\n• Заголовок — название узла (что он делает)\n• Входные пины (слева) — данные или управление, поступающее в узел\n• Выходные пины (справа) — результаты или следующее действие\n• Пин Exec (белый треугольник) — управляет порядком выполнения\n\n**Типы пинов:**\n• Exec (белый) — поток выполнения, порядок операций\n• Boolean (красный) — true/false значения\n• Integer (голубой) — целые числа: 1, 42, -7\n• Float (зелёный) — числа с запятой: 3.14, -0.5\n• String (розовый) — текстовые строки\n• Object (бирюзовый) — ссылки на объекты\n• Vector (оранжевый) — координаты: X, Y, Z\n\n**Правила соединения:**\nПины совместимых типов можно соединять. UE5 автоматически конвертирует некоторые типы (int → float). Пины одного цвета обычно совместимы.",
+        xpReward: 130,
+        estimatedMinutes: 9,
+        tags: ["узлы", "пины", "типы"],
+        realWorldExample:
+          "Система урона: пин Float принимает число урона, пин Object — ссылку на персонажа, Exec-пины управляют порядком: проверка брони → вычитание здоровья → проверка смерти.",
+        practiceTask:
+          "Создайте цепочку: BeginPlay → Delay (2 секунды) → Print String «Запуск завершён». Изучите, как Delay блокирует дальнейшее выполнение.",
         quizQuestions: [
           {
-            id: "q006",
-            question: "What color are execution (flow) pins in Blueprint?",
-            options: ["Blue", "Green", "White", "Yellow"],
+            id: "q007",
+            question: "Какой цвет у пина потока выполнения (Exec) в Blueprint?",
+            options: ["Красный", "Зелёный", "Белый", "Синий"],
             correctIndex: 2,
-            explanation: "White pins represent the execution flow in Blueprint — they determine the order in which nodes execute."
+            explanation:
+              "Пины Exec белого цвета — они управляют порядком выполнения узлов в Blueprint.",
           },
           {
-            id: "q007",
-            question: "What makes a Pure node different from a Function node?",
+            id: "q008",
+            question: "Какой тип пина используется для значений true/false?",
+            options: ["Float", "Integer", "String", "Boolean"],
+            correctIndex: 3,
+            explanation:
+              "Пин Boolean (красный) хранит значения true или false — используется для условий и переключателей.",
+          },
+          {
+            id: "q009",
+            question: "Что произойдёт, если соединить Float-пин с Integer-пином?",
             options: [
-              "Pure nodes are faster",
-              "Pure nodes have no side effects and no execution pins",
-              "Pure nodes can only be used once",
-              "Pure nodes require a special license"
+              "Ошибка компиляции",
+              "UE5 автоматически конвертирует типы",
+              "Значение станет равным нулю",
+              "Blueprint перестанет работать",
             ],
             correctIndex: 1,
-            explanation: "Pure nodes (green header) have no side effects and no execution pins — they just return values whenever their output is needed."
-          }
-        ]
+            explanation: "UE5 автоматически вставляет узел конвертации при соединении совместимых типов.",
+          },
+        ],
+        buildChallenge: {
+          instruction:
+            "Постройте задержанный запуск: Event BeginPlay → Delay → Print String. Задержка должна получить значение Duration.",
+          hint: "Соедините Exec BeginPlay → Exec Delay, затем Completed Delay → Exec Print String.",
+          nodes: [
+            {
+              id: "n1",
+              title: "Event BeginPlay",
+              nodeType: "event",
+              inputs: [],
+              outputs: [{ id: "exec", label: "Exec", type: "exec" }],
+              x: 10,
+              y: 80,
+            },
+            {
+              id: "n2",
+              title: "Delay",
+              nodeType: "function",
+              inputs: [
+                { id: "exec", label: "Exec", type: "exec" },
+                { id: "dur", label: "Duration", type: "float" },
+              ],
+              outputs: [{ id: "completed", label: "Completed", type: "exec" }],
+              x: 190,
+              y: 60,
+            },
+            {
+              id: "n3",
+              title: "Print String",
+              nodeType: "function",
+              inputs: [
+                { id: "exec", label: "Exec", type: "exec" },
+                { id: "str", label: "In String", type: "string" },
+              ],
+              outputs: [{ id: "exec", label: "Exec", type: "exec" }],
+              x: 370,
+              y: 80,
+            },
+          ],
+          solution: [
+            { fromNodeId: "n1", fromPinId: "exec", toNodeId: "n2", toPinId: "exec" },
+            { fromNodeId: "n2", fromPinId: "completed", toNodeId: "n3", toPinId: "exec" },
+          ],
+        },
       },
       {
         id: "les_004",
         moduleId: "mod_nodes",
-        title: "Execution Flow",
-        description: "How Blueprint executes: sequences, branches, and multiple outputs",
-        content: "Blueprint execution follows the white execution wires from left to right. Understanding this flow is crucial.\n\n**Sequential Execution** — Nodes connected with white wires execute one after another.\n\n**Branch Node** — The Blueprint equivalent of if/else. Takes a Boolean condition and routes execution to True or False outputs.\n\n**Sequence Node** — Executes multiple connected outputs in order. Useful for organizing complex logic.\n\n**Do Once** — Allows execution to pass through only once, then blocks until Reset is called.\n\n**Do N** — Executes a maximum of N times before stopping.\n\n**Gate** — Open/Close to allow or block execution flow.\n\n**FlipFlop** — Alternates between A and B outputs each time it's called.\n\n**Is Valid** — Checks if an object reference is valid before using it (prevents crashes).\n\n**Pro Tip:** Right-click any execution wire and add a node inline. Hold Alt and click a wire to disconnect it.",
-        xpReward: 150,
-        estimatedMinutes: 10,
-        tags: ["flow", "branch"],
-        practiceTask: "Create a Branch node that checks if a variable is greater than 5. Print 'High' if true, 'Low' if false.",
+        title: "События и Tick",
+        description: "Ключевые события Blueprint и цикл обновления игры",
+        content:
+          "Событийно-ориентированное программирование — основа Blueprint. Вы реагируете на происходящее в игре, а не запускаете код постоянно.\n\n**Главные события:**\n• Event BeginPlay — срабатывает один раз при появлении Actor на уровне\n• Event Tick — каждый кадр (избегайте тяжёлых вычислений!)\n• Event EndPlay — при уничтожении Actor\n• Event Hit — при столкновении с объектом\n• Event Overlap Begin/End — при перекрытии с другим Actor\n\n**Событие Tick — осторожно!**\nTick срабатывает 60+ раз в секунду. Тяжёлая логика в Tick убьёт производительность.\n\n**Лучшие практики:**\n• Используйте Tick только для плавных анимаций/движений\n• Для периодических действий — Timers вместо Tick\n• Для условных реакций — Events вместо постоянной проверки в Tick\n• Отключайте Tick у Actor-ов, которым он не нужен (Start with Tick Enabled = false)\n\n**Пользовательские события:**\nВы можете создавать собственные события через ПКМ → Add Custom Event. Их можно вызывать из других Blueprint через «Call Event».",
+        xpReward: 110,
+        estimatedMinutes: 11,
+        tags: ["события", "tick", "производительность"],
+        realWorldExample:
+          "Вращающаяся платформа использует Tick для плавного вращения. Дверь открывается по событию Overlap. Таймер перезарядки — через Set Timer by Function Name.",
+        practiceTask:
+          "Добавьте Event Tick и выведите сообщение. Затем замените его на Set Timer by Function Name с интервалом 2 секунды. Сравните частоту вызовов в Output Log.",
         quizQuestions: [
           {
-            id: "q008",
-            question: "Which node is Blueprint's equivalent of if/else?",
-            options: ["Sequence", "Branch", "Gate", "FlipFlop"],
+            id: "q010",
+            question: "Как часто срабатывает Event Tick?",
+            options: ["Раз в секунду", "Каждый кадр", "Только при нажатии клавиши", "При столкновении с объектом"],
             correctIndex: 1,
-            explanation: "Branch node takes a Boolean input and routes execution to either the True or False output pin."
+            explanation: "Event Tick срабатывает каждый кадр — обычно 30-120 раз в секунду.",
           },
           {
-            id: "q009",
-            question: "What does the Sequence node do?",
-            options: [
-              "Creates a random sequence",
-              "Executes multiple connected outputs in order",
-              "Loops through an array",
-              "Delays execution"
-            ],
+            id: "q011",
+            question: "Что лучше использовать для периодических действий вместо Tick?",
+            options: ["Event BeginPlay", "Set Timer by Function Name", "Event Hit", "Event EndPlay"],
             correctIndex: 1,
-            explanation: "Sequence node executes its Then 0, Then 1, Then 2... outputs sequentially, allowing you to chain multiple actions."
-          }
-        ]
-      }
-    ]
+            explanation:
+              "Set Timer позволяет выполнять функции через заданные интервалы, не нагружая каждый кадр.",
+          },
+          {
+            id: "q012",
+            question: "Когда срабатывает Event BeginPlay?",
+            options: [
+              "Каждый кадр",
+              "При столкновении",
+              "Один раз при появлении Actor на уровне",
+              "При нажатии кнопки воспроизведения",
+            ],
+            correctIndex: 2,
+            explanation: "Event BeginPlay срабатывает один раз — когда Actor появляется на уровне (начало игры или спавн).",
+          },
+        ],
+        buildChallenge: {
+          instruction:
+            "Постройте систему таймера: BeginPlay → Set Timer by Event → (через 3 сек) → Print String 'Время вышло!'",
+          hint: "Соедините BeginPlay с Set Timer by Event. Выход Expired таймера соедините с Print String.",
+          nodes: [
+            {
+              id: "n1",
+              title: "Event BeginPlay",
+              nodeType: "event",
+              inputs: [],
+              outputs: [{ id: "exec", label: "Exec", type: "exec" }],
+              x: 10,
+              y: 80,
+            },
+            {
+              id: "n2",
+              title: "Set Timer",
+              subtitle: "by Event",
+              nodeType: "function",
+              inputs: [
+                { id: "exec", label: "Exec", type: "exec" },
+                { id: "time", label: "Time", type: "float" },
+              ],
+              outputs: [
+                { id: "exec", label: "Exec", type: "exec" },
+                { id: "expired", label: "Expired", type: "exec" },
+              ],
+              x: 190,
+              y: 50,
+            },
+            {
+              id: "n3",
+              title: "Print String",
+              nodeType: "function",
+              inputs: [
+                { id: "exec", label: "Exec", type: "exec" },
+                { id: "str", label: "In String", type: "string" },
+              ],
+              outputs: [{ id: "exec", label: "Exec", type: "exec" }],
+              x: 380,
+              y: 80,
+            },
+          ],
+          solution: [
+            { fromNodeId: "n1", fromPinId: "exec", toNodeId: "n2", toPinId: "exec" },
+            { fromNodeId: "n2", fromPinId: "expired", toNodeId: "n3", toPinId: "exec" },
+          ],
+        },
+      },
+    ],
   },
   {
-    id: "mod_variables",
-    title: "Variables & Data Types",
-    description: "Store and manipulate data: integers, floats, booleans, strings, vectors",
+    id: "mod_vars",
+    title: "Переменные и Типы данных",
+    description: "Хранение, получение и работа с данными в Blueprint",
     icon: "database",
     difficulty: "beginner",
     color: "#39D353",
@@ -209,206 +486,687 @@ export const MODULES: Module[] = [
     lessons: [
       {
         id: "les_005",
-        moduleId: "mod_variables",
-        title: "Variable Types",
-        description: "Boolean, Integer, Float, String, Name, Vector, Rotator, Transform",
-        content: "Variables store data in your Blueprint. Choosing the right type is important for both correctness and performance.\n\n**Boolean** — True or False. Used for flags, states, toggles. (Green)\n\n**Integer** — Whole numbers (-2, 0, 5, 100). Use for counts, indexes, ammo. (Cyan)\n\n**Float** — Decimal numbers (3.14, -0.5). Use for speed, health, damage. (Green-yellow)\n\n**String** — Text ('Hello World'). Used for display text, debug info. Avoid in gameplay logic.\n\n**Name** — Like String but optimized for comparison. Use for identifiers, tags.\n\n**Vector** — 3D point (X, Y, Z). Used for positions, directions, velocities. (Yellow)\n\n**Rotator** — Rotation in 3 axes (Pitch, Yaw, Roll). Used for object orientation.\n\n**Transform** — Combines Location (Vector), Rotation (Rotator), and Scale (Vector).\n\n**Object Reference** — A reference to a specific Blueprint actor instance.\n\n**Variable Scope:**\n• Instance variables — Different value per Actor instance\n• Class defaults — Shared starting values\n• Local variables — Exist only inside a function",
-        xpReward: 180,
+        moduleId: "mod_vars",
+        title: "Переменные Blueprint",
+        description: "Создание и использование переменных для хранения данных",
+        content:
+          "Переменные — основа хранения данных в Blueprint. Без переменных каждое значение жёстко задано в коде и не может изменяться.\n\n**Создание переменной:**\n1. Откройте Blueprint\n2. В панели My Blueprint → Variables → нажмите +\n3. Выберите тип: Boolean, Integer, Float, String и др.\n4. Задайте имя и значение по умолчанию\n\n**Get vs Set:**\n• Узел Get (чистый, синий) — читает значение, не прерывая выполнение\n• Узел Set — записывает новое значение, имеет Exec-пины\n\n**Область видимости:**\n• Private (по умолчанию) — только внутри этого Blueprint\n• Public — другие Blueprint могут читать/записывать\n• Instance Editable (глаз) — редактируется в панели Details на уровне\n\n**Важные типы:**\n• Boolean — флаги: isAlive, isDead, isOpen\n• Integer — счётчики: ammoCount, score, level\n• Float — физика, анимация: speed, health, opacity\n• String — текст для отладки или UI\n• Vector — позиция, направление в 3D-пространстве\n• Object Reference — ссылка на другой Actor",
+        xpReward: 140,
         estimatedMinutes: 12,
-        tags: ["variables", "data"],
-        practiceTask: "Create variables: PlayerHealth (Float, default 100), IsAlive (Boolean, default true), PlayerName (String).",
+        tags: ["переменные", "данные", "типы"],
+        realWorldExample:
+          "Персонаж-игрок: CurrentHealth (Float), MaxHealth (Float), IsAlive (Boolean), AmmoCount (Integer), PlayerName (String) — всё это переменные Blueprint.",
+        practiceTask:
+          "Создайте переменные: Health (Float, 100.0), IsAlive (Boolean, true), PlayerName (String, «Игрок»). В BeginPlay выведите все три значения через Print String.",
         quizQuestions: [
           {
-            id: "q010",
-            question: "Which type should you use for an ammo counter?",
-            options: ["Float", "String", "Integer", "Boolean"],
-            correctIndex: 2,
-            explanation: "Integer (whole numbers) is perfect for ammo counters since you can't have 5.5 bullets."
+            id: "q013",
+            question: "Какой узел используется для ЗАПИСИ значения переменной?",
+            options: ["Get (синий)", "Set (с Exec-пинами)", "Variable (жёлтый)", "Print (розовый)"],
+            correctIndex: 1,
+            explanation: "Узел Set записывает новое значение в переменную. Он имеет входной и выходной Exec-пин.",
           },
           {
-            id: "q011",
-            question: "What does a Transform variable store?",
+            id: "q014",
+            question: "Что означает пометка «Instance Editable» у переменной?",
             options: [
-              "Only position",
-              "Only rotation",
-              "Location, Rotation, and Scale together",
-              "Color and opacity"
+              "Переменная не может быть изменена",
+              "Переменная редактируется в Details для каждого экземпляра на уровне",
+              "Переменная работает только в редакторе",
+              "Переменная автоматически сохраняется",
             ],
+            correctIndex: 1,
+            explanation:
+              "Instance Editable позволяет устанавливать разные значения для каждого объекта этого Blueprint на уровне через панель Details.",
+          },
+          {
+            id: "q015",
+            question: "Какой тип переменной лучше для хранения позиции в 3D-пространстве?",
+            options: ["Float", "Integer", "Vector", "String"],
             correctIndex: 2,
-            explanation: "Transform combines Location (Vector), Rotation (Rotator), and Scale (Vector) into a single convenient variable."
-          }
-        ]
+            explanation: "Vector хранит координаты X, Y, Z — идеально для позиций, направлений и скоростей в 3D.",
+          },
+        ],
+        buildChallenge: {
+          instruction:
+            "Постройте систему здоровья: BeginPlay → Get Health → Branch (Health > 0) → [True] Print 'Живой' / [False] Print 'Мёртвый'",
+          hint: "Соедините BeginPlay → Branch. К пину Condition Branch соедините Get Health (это сделает неявное сравнение). Из True/False выведите Print String.",
+          nodes: [
+            {
+              id: "n1",
+              title: "Event BeginPlay",
+              nodeType: "event",
+              inputs: [],
+              outputs: [{ id: "exec", label: "Exec", type: "exec" }],
+              x: 10,
+              y: 100,
+            },
+            {
+              id: "n2",
+              title: "Get Health",
+              subtitle: "Float Variable",
+              nodeType: "variable",
+              inputs: [],
+              outputs: [{ id: "val", label: "Health", type: "float" }],
+              x: 10,
+              y: 190,
+            },
+            {
+              id: "n3",
+              title: "Branch",
+              nodeType: "flow",
+              inputs: [
+                { id: "exec", label: "Exec", type: "exec" },
+                { id: "cond", label: "Condition", type: "bool" },
+              ],
+              outputs: [
+                { id: "true", label: "True", type: "exec" },
+                { id: "false", label: "False", type: "exec" },
+              ],
+              x: 195,
+              y: 70,
+            },
+            {
+              id: "n4",
+              title: "Print String",
+              subtitle: "'Живой'",
+              nodeType: "function",
+              inputs: [
+                { id: "exec", label: "Exec", type: "exec" },
+                { id: "str", label: "String", type: "string" },
+              ],
+              outputs: [{ id: "exec", label: "Exec", type: "exec" }],
+              x: 375,
+              y: 50,
+            },
+            {
+              id: "n5",
+              title: "Print String",
+              subtitle: "'Мёртвый'",
+              nodeType: "function",
+              inputs: [
+                { id: "exec", label: "Exec", type: "exec" },
+                { id: "str", label: "String", type: "string" },
+              ],
+              outputs: [{ id: "exec", label: "Exec", type: "exec" }],
+              x: 375,
+              y: 155,
+            },
+          ],
+          solution: [
+            { fromNodeId: "n1", fromPinId: "exec", toNodeId: "n3", toPinId: "exec" },
+            { fromNodeId: "n3", fromPinId: "true", toNodeId: "n4", toPinId: "exec" },
+            { fromNodeId: "n3", fromPinId: "false", toNodeId: "n5", toPinId: "exec" },
+          ],
+        },
       },
       {
         id: "les_006",
-        moduleId: "mod_variables",
-        title: "Arrays, Maps & Sets",
-        description: "Collections for storing multiple values efficiently",
-        content: "Collections let you store multiple values in a single variable.\n\n**Array** — Ordered list of items. Each item has an index starting at 0.\n• Get (copy) — Read value at index\n• Set — Change value at index\n• Add — Append to end\n• Remove Index — Delete specific index\n• Length — Get count of items\n• ForEachLoop — Iterate all items\n\n**Map** — Key-value pairs (like a dictionary).\n• Add entry — Insert key:value pair\n• Find — Look up value by key\n• Contains — Check if key exists\n• Keys — Get array of all keys\n\n**Set** — Unordered collection of unique values. No duplicates.\n• Add Member — Insert value (ignored if duplicate)\n• Contains — Check membership\n• Intersection — Find values in both sets\n\n**Performance Tips:**\n• Arrays are fastest for sequential access\n• Maps excel at lookup by key\n• Sets are perfect for 'has this been collected?' checks\n• Avoid huge arrays in Tick — cache results",
-        xpReward: 200,
+        moduleId: "mod_vars",
+        title: "Массивы и Структуры",
+        description: "Работа с коллекциями данных и пользовательскими структурами",
+        content:
+          "Когда простых переменных недостаточно, используйте массивы и структуры.\n\n**Массивы (Arrays):**\nМассив — упорядоченный список элементов одного типа.\n\n• Индексация с нуля: первый элемент — [0]\n• Add — добавить элемент\n• Remove — удалить по значению\n• Get (a copy) — получить по индексу\n• Length — количество элементов\n• For Each Loop — перебрать все элементы\n\n**Структуры (Structs):**\nСтруктура — пользовательский тип данных, объединяющий несколько переменных.\n\nПример структуры «Предмет инвентаря»:\n• Name (String)\n• Damage (Float)\n• Durability (Integer)\n• Icon (Texture2D)\n\n**Создание структуры:**\nContent Browser → ПКМ → Blueprint → Structure → добавьте поля.\n\n**Maps (Словари):**\nMap хранит пары ключ-значение. Мгновенный поиск по ключу.\nПример: Map<String, Integer> для счёта игроков по имени.",
+        xpReward: 150,
         estimatedMinutes: 14,
-        tags: ["variables", "arrays", "collections"],
-        practiceTask: "Create an Inventory array of Strings. Add 3 items, loop through and print each one.",
+        tags: ["массивы", "структуры", "коллекции"],
+        realWorldExample:
+          "Инвентарь: массив структур Item, каждая со свойствами Name/Damage/Durability. For Each Loop — перебор предметов. Map — быстрый поиск предмета по имени.",
+        practiceTask:
+          "Создайте массив строк с именами 3 врагов. В BeginPlay переберите массив через For Each Loop и выведите каждое имя через Print String.",
         quizQuestions: [
           {
-            id: "q012",
-            question: "What index does the first item in a Blueprint Array have?",
-            options: ["1", "0", "-1", "It depends on the array"],
+            id: "q016",
+            question: "С какого индекса начинаются массивы в Blueprint?",
+            options: ["1", "0", "-1", "Зависит от типа"],
             correctIndex: 1,
-            explanation: "Arrays in Blueprint (and most programming languages) start at index 0. The first item is at index 0."
+            explanation: "Массивы в Blueprint начинаются с индекса 0 — первый элемент всегда [0].",
           },
           {
-            id: "q013",
-            question: "When would you use a Map instead of an Array?",
+            id: "q017",
+            question: "Что такое Struct (Структура) в Blueprint?",
             options: [
-              "When you need ordered items",
-              "When you need to look up values by a specific key quickly",
-              "When you need to store booleans",
-              "Maps are always better than Arrays"
+              "Массив объектов",
+              "Пользовательский тип данных, объединяющий несколько переменных",
+              "Специальный тип Actor",
+              "Граф функций",
             ],
             correctIndex: 1,
-            explanation: "Maps (key-value pairs) excel when you need to quickly find a value using a specific key, like looking up damage values by weapon type."
-          }
-        ]
-      }
-    ]
+            explanation:
+              "Struct — пользовательский тип данных, объединяющий несколько переменных в один контейнер.",
+          },
+          {
+            id: "q018",
+            question: "Какой контейнер обеспечивает мгновенный поиск по ключу?",
+            options: ["Array", "Set", "Map", "Struct"],
+            correctIndex: 2,
+            explanation:
+              "Map (словарь) хранит пары ключ-значение и обеспечивает O(1) поиск по ключу.",
+          },
+        ],
+        buildChallenge: {
+          instruction:
+            "Постройте перебор массива: BeginPlay → For Each Loop (массив строк) → на каждой итерации Print Array Element.",
+          hint: "Соедините Exec BeginPlay → Exec For Each Loop. Выход Loop Body соедините с Exec Print String. Пин Array Element передайте в строку.",
+          nodes: [
+            {
+              id: "n1",
+              title: "Event BeginPlay",
+              nodeType: "event",
+              inputs: [],
+              outputs: [{ id: "exec", label: "Exec", type: "exec" }],
+              x: 10,
+              y: 100,
+            },
+            {
+              id: "n2",
+              title: "For Each Loop",
+              nodeType: "flow",
+              inputs: [
+                { id: "exec", label: "Exec", type: "exec" },
+                { id: "arr", label: "Array", type: "string" },
+              ],
+              outputs: [
+                { id: "body", label: "Loop Body", type: "exec" },
+                { id: "elem", label: "Array Element", type: "string" },
+                { id: "completed", label: "Completed", type: "exec" },
+              ],
+              x: 185,
+              y: 60,
+            },
+            {
+              id: "n3",
+              title: "Print String",
+              nodeType: "function",
+              inputs: [
+                { id: "exec", label: "Exec", type: "exec" },
+                { id: "str", label: "In String", type: "string" },
+              ],
+              outputs: [{ id: "exec", label: "Exec", type: "exec" }],
+              x: 375,
+              y: 60,
+            },
+          ],
+          solution: [
+            { fromNodeId: "n1", fromPinId: "exec", toNodeId: "n2", toPinId: "exec" },
+            { fromNodeId: "n2", fromPinId: "body", toNodeId: "n3", toPinId: "exec" },
+            { fromNodeId: "n2", fromPinId: "elem", toNodeId: "n3", toPinId: "str" },
+          ],
+        },
+      },
+    ],
   },
   {
     id: "mod_functions",
-    title: "Functions & Macros",
-    description: "Organize and reuse logic with custom functions, events, and macros",
+    title: "Функции и Макросы",
+    description: "Создание переиспользуемой логики через функции и макросы",
     icon: "code",
     difficulty: "basic",
-    color: "#FF6B35",
+    color: "#FFB800",
     xpRequired: 400,
     lessons: [
       {
         id: "les_007",
         moduleId: "mod_functions",
-        title: "Custom Functions",
-        description: "Create reusable functions with inputs and outputs",
-        content: "Functions let you organize code into reusable blocks. Instead of duplicating 20 nodes in multiple places, create a function once and call it anywhere.\n\n**Creating a Function:**\n1. In My Blueprint panel, click + next to Functions\n2. Name it clearly (e.g., 'CalculateDamage', 'SpawnEnemy')\n3. Add inputs and outputs in the Details panel\n4. Build the logic inside the function graph\n\n**Function Inputs** — Data passed into the function when called\n**Function Outputs** — Data returned after the function runs\n\n**Pure Functions** — Check 'Pure' in Details. No execution pins, can be used like math nodes.\n\n**Local Variables** — Variables that only exist inside a function. Declared in the function's Local Variables section.\n\n**Best Practices:**\n• Name functions with verbs: 'CalculateDamage' not 'Damage'\n• Keep functions focused on ONE thing\n• Functions can call other functions\n• Max ~20-30 nodes per function before splitting\n\n**Functions vs Custom Events:**\n• Functions — Synchronous, can return values, can't have Delays or Latent nodes\n• Custom Events — Async-friendly, no return values, can use Timeline and Delay",
-        xpReward: 220,
-        estimatedMinutes: 15,
-        tags: ["functions", "organization"],
-        practiceTask: "Create a function 'TakeDamage' with Float input 'DamageAmount'. It should subtract from Health and print the result.",
+        title: "Создание функций",
+        description: "Как создавать и вызывать собственные функции в Blueprint",
+        content:
+          "Функции — основа организации кода. Вместо повторения одной логики в разных местах — вынесите её в функцию.\n\n**Создание функции:**\n1. В панели My Blueprint → Functions → нажмите +\n2. Задайте имя функции\n3. В деталях добавьте Inputs и Outputs\n4. Реализуйте логику в открывшемся графе\n\n**Параметры функции:**\n• Inputs — аргументы, которые получает функция\n• Outputs — возвращаемые значения\n• Функция может иметь несколько входов и выходов\n\n**Чистые функции (Pure Functions):**\nФункции без Exec-пинов. Они не имеют побочных эффектов и вызываются автоматически при необходимости. Идеальны для математики и вычислений.\n\n**Правила функций:**\n• Функция не может вызывать событийные узлы\n• Функция не может содержать Delay (используйте Custom Events)\n• Функция Local Variables — временные переменные только внутри функции\n• Функции компилируются эффективнее макросов\n\n**Когда использовать функции vs Макросы:**\n• Функции: переиспользуемая логика с параметрами, можно вызывать из других BP\n• Макросы: локальные сокращения, могут содержать Delay и Timeline",
+        xpReward: 160,
+        estimatedMinutes: 13,
+        tags: ["функции", "рефакторинг", "организация"],
+        realWorldExample:
+          "Функция TakeDamage(Amount: Float) — принимает количество урона, вычитает из здоровья, проверяет смерть. Вызывается из коллизий, ловушек, врагов — один код, много мест.",
+        practiceTask:
+          "Создайте функцию «CalculateDamage» с параметрами BaseDamage (Float) и ArmorMultiplier (Float). Возвращает FinalDamage = BaseDamage * (1 - ArmorMultiplier). Вызовите её из BeginPlay.",
         quizQuestions: [
           {
-            id: "q014",
-            question: "What is the main advantage of using Functions?",
+            id: "q019",
+            question: "Что такое Pure Function в Blueprint?",
             options: [
-              "They run faster than regular nodes",
-              "They can only be used in one Blueprint",
-              "Reusable, organized logic that avoids code duplication",
-              "They automatically handle errors"
-            ],
-            correctIndex: 2,
-            explanation: "Functions let you write logic once and call it from multiple places, avoiding duplication and making code easier to maintain."
-          },
-          {
-            id: "q015",
-            question: "Can a regular Function contain a Delay node?",
-            options: [
-              "Yes, always",
-              "No, use Custom Events for async operations",
-              "Only if it returns void",
-              "Only in Game Mode Blueprint"
+              "Функция без входных параметров",
+              "Функция без Exec-пинов, без побочных эффектов",
+              "Функция, доступная только внутри Blueprint",
+              "Функция для работы с UI",
             ],
             correctIndex: 1,
-            explanation: "Regular Functions are synchronous and cannot contain latent nodes like Delay or Timeline. Use Custom Events instead for async operations."
-          }
-        ]
+            explanation:
+              "Pure Function не имеет Exec-пинов и не изменяет состояние. Вызывается автоматически при нужде в значении.",
+          },
+          {
+            id: "q020",
+            question: "Что НЕ может содержать обычная функция Blueprint?",
+            options: ["Математические вычисления", "Узел Delay", "Условия Branch", "Циклы"],
+            correctIndex: 1,
+            explanation:
+              "Функции не могут содержать Delay. Для асинхронных задержек используйте Custom Events или Macros.",
+          },
+          {
+            id: "q021",
+            question: "Где хранятся локальные переменные функции?",
+            options: [
+              "В панели My Blueprint → Variables",
+              "В Content Browser",
+              "Только внутри функции — уничтожаются при её завершении",
+              "В глобальном Game State",
+            ],
+            correctIndex: 2,
+            explanation:
+              "Local Variables существуют только во время выполнения функции и недоступны снаружи.",
+          },
+        ],
+        buildChallenge: {
+          instruction:
+            "Постройте вызов функции: BeginPlay → Calculate Damage (BaseDamage=100, Armor=0.3) → результат передайте в Print String.",
+          hint: "Соедините Exec BeginPlay → Exec Calculate Damage. Выход FinalDamage соедините с пином String Print String (через конвертацию).",
+          nodes: [
+            {
+              id: "n1",
+              title: "Event BeginPlay",
+              nodeType: "event",
+              inputs: [],
+              outputs: [{ id: "exec", label: "Exec", type: "exec" }],
+              x: 10,
+              y: 80,
+            },
+            {
+              id: "n2",
+              title: "Calculate Damage",
+              subtitle: "Custom Function",
+              nodeType: "function",
+              inputs: [
+                { id: "exec", label: "Exec", type: "exec" },
+                { id: "base", label: "BaseDamage", type: "float" },
+                { id: "armor", label: "Armor", type: "float" },
+              ],
+              outputs: [
+                { id: "exec", label: "Exec", type: "exec" },
+                { id: "result", label: "FinalDamage", type: "float" },
+              ],
+              x: 185,
+              y: 50,
+            },
+            {
+              id: "n3",
+              title: "Print String",
+              nodeType: "function",
+              inputs: [
+                { id: "exec", label: "Exec", type: "exec" },
+                { id: "str", label: "In String", type: "string" },
+              ],
+              outputs: [{ id: "exec", label: "Exec", type: "exec" }],
+              x: 370,
+              y: 80,
+            },
+          ],
+          solution: [
+            { fromNodeId: "n1", fromPinId: "exec", toNodeId: "n2", toPinId: "exec" },
+            { fromNodeId: "n2", fromPinId: "exec", toNodeId: "n3", toPinId: "exec" },
+          ],
+        },
       },
       {
         id: "les_008",
         moduleId: "mod_functions",
-        title: "Custom Events & Dispatchers",
-        description: "Event dispatchers for decoupled Blueprint communication",
-        content: "Event Dispatchers allow Blueprints to communicate without directly referencing each other — the foundation of decoupled game architecture.\n\n**Custom Events:**\nCreate in the Event Graph via Add Custom Event. They can have parameters, can be called from anywhere, and support async operations.\n\n**Event Dispatchers:**\nDeclare in My Blueprint > Event Dispatchers. Other Blueprints can Bind to them and receive notifications.\n\n**How Dispatchers Work:**\n1. Blueprint A declares a Dispatcher 'OnEnemyDied'\n2. Blueprint B (e.g., Score Manager) binds to that Dispatcher\n3. When Blueprint A calls the Dispatcher, ALL bound listeners are notified automatically\n\n**Usage Pattern:**\n```\nDeclare → Bind → Call → All listeners respond\n```\n\n**Bind Event to Dispatcher** — Connect a function/event to a dispatcher\n**Call [DispatcherName]** — Fire the event to all listeners\n**Unbind** — Remove a binding (important to prevent memory leaks)\n\n**When to use:**\n• Enemy death → Update score (dispatcher)\n• Health changed → Update HUD (dispatcher)\n• Quest completed → Unlock new area (dispatcher)\n\n**vs Interfaces:** Dispatchers are 1-to-many, Interfaces are direct calls to specific actors.",
-        xpReward: 250,
+        title: "Управление потоком",
+        description: "Branch, Switch, Loops и другие инструменты управления логикой",
+        content:
+          "Управление потоком определяет, какой путь выполнения выбирается в зависимости от условий.\n\n**Branch (Ветвление):**\nОсновной условный оператор. Принимает Boolean → два пути: True и False.\n\n**Switch on Enum/Int/String:**\nКак switch в C++ — выбирает путь по значению переменной. Эффективнее цепочки Branch.\n\n**Циклы:**\n• For Loop — от Start до End с индексом\n• For Each Loop — перебор элементов массива\n• While Loop — пока условие true (осторожно: бесконечный цикл!)\n• Do N Times — повторить N раз\n• Do Once — выполнить только один раз, затем заблокировать\n\n**Sequence:**\nВыполняет несколько ветвей последовательно из одного Exec-пина. Удобно для упорядочивания шагов.\n\n**Gate:**\nОткрывает или закрывает поток выполнения. Open → пропускает Exec, Close → блокирует.\n\n**FlipFlop:**\nПереключается между двумя путями при каждом вызове: A → B → A → B...",
+        xpReward: 170,
         estimatedMinutes: 15,
-        tags: ["events", "dispatchers", "communication"],
+        tags: ["ветвление", "циклы", "логика"],
+        realWorldExample:
+          "Switch on Enum для выбора состояния ИИ (Idle/Chase/Attack). Do Once для одноразового события открытия двери. FlipFlop для переключения фонаря вкл/выкл.",
+        practiceTask:
+          "Создайте переменную GameState (Enum: Lobby, Playing, GameOver). Добавьте Switch on Enum и для каждого состояния выведите разное сообщение.",
         quizQuestions: [
           {
-            id: "q016",
-            question: "What is the main advantage of Event Dispatchers?",
+            id: "q022",
+            question: "Что делает узел Do Once в Blueprint?",
             options: [
-              "They are faster than function calls",
-              "Blueprints can communicate without directly referencing each other",
-              "They work only in multiplayer games",
-              "They replace all other Blueprint nodes"
+              "Выполняет действие один раз в секунду",
+              "Выполняет следующий узел только при первом вызове, затем блокирует",
+              "Создаёт одну копию объекта",
+              "Вызывает функцию без параметров",
             ],
             correctIndex: 1,
-            explanation: "Event Dispatchers allow decoupled communication — Blueprint A can notify Blueprint B without holding a direct reference to it."
-          }
-        ]
-      }
-    ]
+            explanation: "Do Once пропускает первый вызов Exec, затем блокирует — идеально для одноразовых событий.",
+          },
+          {
+            id: "q023",
+            question: "Какой узел переключается между двумя путями при каждом вызове?",
+            options: ["Switch", "Branch", "FlipFlop", "Gate"],
+            correctIndex: 2,
+            explanation: "FlipFlop при первом вызове идёт по пути A, при втором — B, при третьем — A и т.д.",
+          },
+          {
+            id: "q024",
+            question: "Чем опасен While Loop в Blueprint?",
+            options: [
+              "Он работает медленнее For Loop",
+              "Может создать бесконечный цикл, заморозив игру",
+              "Не работает с массивами",
+              "Требует установки плагина",
+            ],
+            correctIndex: 1,
+            explanation:
+              "While Loop продолжается, пока условие true. Если условие никогда не станет false — бесконечный цикл зависнет движок.",
+          },
+        ],
+        buildChallenge: {
+          instruction:
+            "Постройте ветвление здоровья: Get Health → Branch (> 50) → [True] 'Здоров' / [False] Sequence → 'Ранен' + 'Применить лечение'",
+          hint: "Branch соединяется с Sequence на пути False. Sequence имеет два выхода — Then 0 и Then 1 — каждый ведёт к своему Print String.",
+          nodes: [
+            {
+              id: "n1",
+              title: "Event BeginPlay",
+              nodeType: "event",
+              inputs: [],
+              outputs: [{ id: "exec", label: "Exec", type: "exec" }],
+              x: 10,
+              y: 110,
+            },
+            {
+              id: "n2",
+              title: "Branch",
+              nodeType: "flow",
+              inputs: [
+                { id: "exec", label: "Exec", type: "exec" },
+                { id: "cond", label: "Condition", type: "bool" },
+              ],
+              outputs: [
+                { id: "true", label: "True", type: "exec" },
+                { id: "false", label: "False", type: "exec" },
+              ],
+              x: 185,
+              y: 70,
+            },
+            {
+              id: "n3",
+              title: "Print 'Здоров'",
+              nodeType: "function",
+              inputs: [
+                { id: "exec", label: "Exec", type: "exec" },
+                { id: "str", label: "String", type: "string" },
+              ],
+              outputs: [{ id: "exec", label: "Exec", type: "exec" }],
+              x: 370,
+              y: 40,
+            },
+            {
+              id: "n4",
+              title: "Sequence",
+              nodeType: "flow",
+              inputs: [{ id: "exec", label: "Exec", type: "exec" }],
+              outputs: [
+                { id: "t0", label: "Then 0", type: "exec" },
+                { id: "t1", label: "Then 1", type: "exec" },
+              ],
+              x: 370,
+              y: 140,
+            },
+            {
+              id: "n5",
+              title: "Print 'Ранен'",
+              nodeType: "function",
+              inputs: [
+                { id: "exec", label: "Exec", type: "exec" },
+                { id: "str", label: "String", type: "string" },
+              ],
+              outputs: [{ id: "exec", label: "Exec", type: "exec" }],
+              x: 540,
+              y: 120,
+            },
+          ],
+          solution: [
+            { fromNodeId: "n1", fromPinId: "exec", toNodeId: "n2", toPinId: "exec" },
+            { fromNodeId: "n2", fromPinId: "true", toNodeId: "n3", toPinId: "exec" },
+            { fromNodeId: "n2", fromPinId: "false", toNodeId: "n4", toPinId: "exec" },
+            { fromNodeId: "n4", fromPinId: "t0", toNodeId: "n5", toPinId: "exec" },
+          ],
+        },
+      },
+    ],
   },
   {
-    id: "mod_actor_comm",
-    title: "Actor Communication",
-    description: "Casting, interfaces, and direct references between Blueprints",
+    id: "mod_comm",
+    title: "Коммуникация между Actor-ами",
+    description: "Передача данных и вызов функций между разными Blueprint",
     icon: "share-2",
     difficulty: "intermediate",
-    color: "#FFB800",
+    color: "#FF6B35",
     xpRequired: 700,
     lessons: [
       {
         id: "les_009",
-        moduleId: "mod_actor_comm",
-        title: "Casting",
-        description: "Cast To node — access specific Blueprint functionality",
-        content: "Casting converts a generic Actor reference into a specific Blueprint type so you can access its variables and functions.\n\n**Why Cast?**\nWhen you Get Player Character, it returns a generic 'Character' type. To access YOUR specific variables like Health or IsRunning, you must Cast to YOUR Blueprint class.\n\n**Cast To Node:**\nInput: Object (any reference)\nOutput: Success/Failure execution, Cast reference (if successful)\n\n**Pattern:**\n```\nGet Player Character → Cast To BP_MyCharacter → Access variables/functions\n```\n\n**Failed Cast:**\nIf the cast fails (object isn't that type), execution goes to Cast Failed pin. Always handle this case!\n\n**Performance Warning:**\nCasting has a small CPU cost. For frequently-called code (Tick), store the cast result in a variable rather than casting every frame.\n\n**Interface vs Cast:**\n• Cast — Direct, specific, requires knowing the exact type\n• Interface — Flexible, works on any Actor implementing it\n\n**Blueprint Interfaces** are preferred over casting for:\n• Interacting with many different actor types\n• Damage systems\n• Pickup systems\n• Any scenario where you don't know the exact actor type",
-        xpReward: 280,
+        moduleId: "mod_comm",
+        title: "Cast и Object References",
+        description: "Получение ссылок на объекты и приведение типов",
+        content:
+          "Для взаимодействия между Blueprint вам нужно иметь ссылку на объект и знать его тип.\n\n**Получение ссылок:**\n• Get Player Character — получить персонажа игрока\n• Get All Actors Of Class — все Actor-ы определённого класса\n• Get Actor Of Class — первый найденный Actor класса\n• Overlap события — возвращают ссылку на Other Actor\n\n**Cast (Приведение типа):**\nCast проверяет, является ли объект определённым классом и даёт доступ к его переменным/функциям.\n\n```\nGet Player Pawn\n  → Cast To BP_Character\n    → [Success] → Set Health → ...\n    → [Failure] → (объект не нужного типа)\n```\n\n**Когда использовать Cast:**\n• Нужен доступ к переменным конкретного BP-класса\n• Actor пришёл через общий тип (Actor, Pawn)\n\n**Оптимизация:**\nCast дорогой при частом вызове. Кэшируйте результат в переменную типа BP_Character.",
+        xpReward: 180,
         estimatedMinutes: 14,
-        tags: ["casting", "communication"],
+        tags: ["cast", "ссылки", "коммуникация"],
+        realWorldExample:
+          "Дверь получает Overlap → Cast To BP_Player → если успешно → Open Door. Без Cast дверь не знает, что перед ней именно игрок.",
+        practiceTask:
+          "В Blueprint двери на Overlap Begin: Cast To BP_ThirdPersonCharacter. При успешном Cast — вывести 'Игрок вошёл' и переместить дверь вверх через Set Actor Location.",
         quizQuestions: [
           {
-            id: "q017",
-            question: "Why is casting every Tick frame a bad practice?",
+            id: "q025",
+            question: "Что делает узел Cast To в Blueprint?",
             options: [
-              "It looks bad in the graph",
-              "Casting has CPU cost — cache the result in a variable instead",
-              "Cast doesn't work in Tick",
-              "It causes network issues"
+              "Конвертирует тип переменной (Float в Integer)",
+              "Проверяет тип объекта и даёт доступ к его специфическим переменным",
+              "Перемещает объект в другое место",
+              "Копирует объект",
             ],
             correctIndex: 1,
-            explanation: "Cast To has a small but real CPU cost. When called 60 times per second in Tick, it adds up. Store cast results in variables."
-          }
-        ]
+            explanation:
+              "Cast To проверяет, является ли объект нужным классом. При успехе — доступ к переменным этого класса.",
+          },
+          {
+            id: "q026",
+            question: "Почему нужно кэшировать результат Cast?",
+            options: [
+              "Cast не возвращает объект",
+              "Cast дорогая операция — повторный вызов тратит ресурсы",
+              "Результат Cast меняется каждый кадр",
+              "Кэширование необязательно",
+            ],
+            correctIndex: 1,
+            explanation:
+              "Cast — относительно дорогая операция. Сохраните результат в переменную и используйте повторно вместо нового Cast.",
+          },
+          {
+            id: "q027",
+            question: "Какой узел вернёт всех Actor-ов определённого класса на уровне?",
+            options: ["Get Player Character", "Get Actor Of Class", "Get All Actors Of Class", "Find Actor By Name"],
+            correctIndex: 2,
+            explanation:
+              "Get All Actors Of Class возвращает массив всех Actor-ов указанного класса, присутствующих на уровне.",
+          },
+        ],
+        buildChallenge: {
+          instruction:
+            "Постройте систему Cast: Overlap Begin → Cast To BP_Character → [Success] Get Health → Print 'Здоровье: X' / [Failure] Print 'Не игрок'",
+          hint: "Пин Other Actor события Overlap подключите к Cast. Из Cast As BP_Character вы получаете доступ к переменным персонажа.",
+          nodes: [
+            {
+              id: "n1",
+              title: "On Actor Begin Overlap",
+              nodeType: "event",
+              inputs: [],
+              outputs: [
+                { id: "exec", label: "Exec", type: "exec" },
+                { id: "other", label: "Other Actor", type: "object" },
+              ],
+              x: 10,
+              y: 80,
+            },
+            {
+              id: "n2",
+              title: "Cast To BP_Character",
+              nodeType: "function",
+              inputs: [
+                { id: "exec", label: "Exec", type: "exec" },
+                { id: "obj", label: "Object", type: "object" },
+              ],
+              outputs: [
+                { id: "success", label: "Cast Succeeded", type: "exec" },
+                { id: "fail", label: "Cast Failed", type: "exec" },
+                { id: "as", label: "As BP_Character", type: "object" },
+              ],
+              x: 210,
+              y: 55,
+            },
+            {
+              id: "n3",
+              title: "Print 'Игрок!'",
+              nodeType: "function",
+              inputs: [
+                { id: "exec", label: "Exec", type: "exec" },
+                { id: "str", label: "String", type: "string" },
+              ],
+              outputs: [{ id: "exec", label: "Exec", type: "exec" }],
+              x: 410,
+              y: 30,
+            },
+            {
+              id: "n4",
+              title: "Print 'Не игрок'",
+              nodeType: "function",
+              inputs: [
+                { id: "exec", label: "Exec", type: "exec" },
+                { id: "str", label: "String", type: "string" },
+              ],
+              outputs: [{ id: "exec", label: "Exec", type: "exec" }],
+              x: 410,
+              y: 150,
+            },
+          ],
+          solution: [
+            { fromNodeId: "n1", fromPinId: "exec", toNodeId: "n2", toPinId: "exec" },
+            { fromNodeId: "n1", fromPinId: "other", toNodeId: "n2", toPinId: "obj" },
+            { fromNodeId: "n2", fromPinId: "success", toNodeId: "n3", toPinId: "exec" },
+            { fromNodeId: "n2", fromPinId: "fail", toNodeId: "n4", toPinId: "exec" },
+          ],
+        },
       },
       {
         id: "les_010",
-        moduleId: "mod_actor_comm",
-        title: "Blueprint Interfaces",
-        description: "Define contracts between Blueprints without tight coupling",
-        content: "Blueprint Interfaces define a contract — a set of functions any Blueprint can implement. This allows interaction with any actor without knowing its specific type.\n\n**Creating an Interface:**\n1. Content Browser → Add → Blueprint Interface\n2. Add functions (no implementation, just signatures)\n3. Add input/output parameters\n\n**Implementing an Interface:**\n1. Open your Blueprint\n2. Class Settings → Add Interface\n3. Go to Event Graph — interface events appear automatically\n4. Add logic to each event\n\n**Calling Interface Functions:**\nUse 'Does Implement Interface' check, then call the interface function on the actor.\n\n**Classic Example — Interact System:**\n```\nInterface: IInteractable\nFunction: Interact(Actor Instigator)\n\nDoor implements → Opens door\nPickup implements → Gives item\nNPC implements → Starts dialogue\n\nPlayer presses E → Call Interact on hit actor → Works on EVERYTHING\n```\n\n**Damage Interface Example:**\nInterface: IDamageable\nFunction: TakeDamage(Float Amount, Actor DamageSource)\n\nAny Actor (Enemy, Barrel, Vehicle) implements it differently. The weapon just calls it without caring what it hits.",
-        xpReward: 300,
-        estimatedMinutes: 18,
-        tags: ["interfaces", "communication"],
+        moduleId: "mod_comm",
+        title: "Event Dispatcher и делегаты",
+        description: "Паттерн Observer через Event Dispatcher в Blueprint",
+        content:
+          "Event Dispatcher — способ уведомить другие Blueprint о событии без прямой связи между ними.\n\n**Проблема прямой связи:**\nЕсли дверь знает о плеере, а плеер знает о двери — это жёсткая зависимость. При изменении одного — ломается другое.\n\n**Event Dispatcher решает это:**\n1. BP_Door создаёт Event Dispatcher «OnDoorOpened»\n2. BP_Player подписывается на этот диспатчер\n3. Когда дверь открывается — она вызывает (Call) диспатчер\n4. Все подписанные объекты получают уведомление\n\n**Создание:**\nMy Blueprint → Event Dispatchers → +\n\n**Вызов (Call):**\nВызовите диспатчер — все подписчики получат событие\n\n**Привязка (Bind):**\nBind Event to [DispatcherName] — подписать функцию на диспатчер\n\n**Отвязка (Unbind):**\nUnbind — отписаться. Всегда отписывайтесь в EndPlay!\n\n**Преимущества:**\n• Слабая связь — объекты не знают друг о друге\n• Один диспатчер — много подписчиков\n• Легко добавлять новых слушателей",
+        xpReward: 200,
+        estimatedMinutes: 16,
+        tags: ["событие", "dispatcher", "observer"],
+        realWorldExample:
+          "Chest (сундук) → OnChestOpened (Dispatcher). UI подписывается → обновляет инвентарь. Звуковой менеджер подписывается → играет звук открытия. Они не знают друг о друге.",
+        practiceTask:
+          "Создайте в BP_Button Event Dispatcher «OnButtonPressed». В Level Blueprint привяжите к нему Custom Event и выводите сообщение при нажатии кнопки.",
         quizQuestions: [
           {
-            id: "q018",
-            question: "What is the main advantage of Blueprint Interfaces over direct casting?",
+            id: "q028",
+            question: "Какую проблему решает Event Dispatcher?",
             options: [
-              "Interfaces run faster",
-              "You can call functions on any actor implementing the interface without knowing its exact type",
-              "Interfaces have better graphics",
-              "Casting doesn't work in multiplayer"
+              "Медленная скорость Blueprint",
+              "Жёсткая зависимость между объектами (tight coupling)",
+              "Отсутствие типов переменных",
+              "Ограничение на количество узлов",
             ],
             correctIndex: 1,
-            explanation: "Interfaces allow calling functions on any Actor implementing them without knowing the exact Blueprint type, enabling flexible and decoupled designs."
-          }
-        ]
-      }
-    ]
+            explanation:
+              "Event Dispatcher позволяет объектам общаться без прямых ссылок друг на друга — паттерн Observer.",
+          },
+          {
+            id: "q029",
+            question: "Что нужно сделать в EndPlay при использовании Bind Event?",
+            options: [
+              "Ничего — привязки очищаются автоматически",
+              "Вызвать Call Dispatcher",
+              "Отвязать (Unbind) подписку",
+              "Удалить переменную диспатчера",
+            ],
+            correctIndex: 2,
+            explanation:
+              "Всегда отвязывайте (Unbind) в EndPlay, иначе уничтоженные объекты могут получать вызовы и вызывать краши.",
+          },
+          {
+            id: "q030",
+            question: "Сколько подписчиков может иметь один Event Dispatcher?",
+            options: ["Только один", "Максимум 4", "Не ограничено", "Зависит от типа платформы"],
+            correctIndex: 2,
+            explanation:
+              "К одному Event Dispatcher может привязаться любое количество объектов — все получат уведомление при вызове.",
+          },
+        ],
+        buildChallenge: {
+          instruction:
+            "Постройте систему диспатчера: BeginPlay → Bind OnDoorOpened → кнопка Call OnDoorOpened → Bind срабатывает → Print 'Дверь открыта!'",
+          hint: "Bind Event создаёт подписку. Когда Call вызывается позже — все подписанные события срабатывают автоматически.",
+          nodes: [
+            {
+              id: "n1",
+              title: "Event BeginPlay",
+              nodeType: "event",
+              inputs: [],
+              outputs: [{ id: "exec", label: "Exec", type: "exec" }],
+              x: 10,
+              y: 80,
+            },
+            {
+              id: "n2",
+              title: "Bind Event",
+              subtitle: "to OnDoorOpened",
+              nodeType: "function",
+              inputs: [
+                { id: "exec", label: "Exec", type: "exec" },
+                { id: "event", label: "Event", type: "exec" },
+              ],
+              outputs: [{ id: "exec", label: "Exec", type: "exec" }],
+              x: 190,
+              y: 60,
+            },
+            {
+              id: "n3",
+              title: "Custom Event",
+              subtitle: "OnDoorHandler",
+              nodeType: "event",
+              inputs: [],
+              outputs: [{ id: "exec", label: "Exec", type: "exec" }],
+              x: 10,
+              y: 180,
+            },
+            {
+              id: "n4",
+              title: "Print 'Дверь открыта!'",
+              nodeType: "function",
+              inputs: [
+                { id: "exec", label: "Exec", type: "exec" },
+                { id: "str", label: "String", type: "string" },
+              ],
+              outputs: [{ id: "exec", label: "Exec", type: "exec" }],
+              x: 370,
+              y: 160,
+            },
+          ],
+          solution: [
+            { fromNodeId: "n1", fromPinId: "exec", toNodeId: "n2", toPinId: "exec" },
+            { fromNodeId: "n3", fromPinId: "exec", toNodeId: "n4", toPinId: "exec" },
+          ],
+        },
+      },
+    ],
   },
   {
     id: "mod_gameplay",
-    title: "Gameplay Mechanics",
-    description: "Health systems, input, timers, line traces, and core game mechanics",
-    icon: "zap",
+    title: "Механики геймплея",
+    description: "Реализация реальных игровых механик через Blueprint",
+    icon: "activity",
     difficulty: "intermediate",
     color: "#FF4757",
     xpRequired: 1100,
@@ -416,287 +1174,656 @@ export const MODULES: Module[] = [
       {
         id: "les_011",
         moduleId: "mod_gameplay",
-        title: "Health & Damage System",
-        description: "Build a complete health/damage system from scratch",
-        content: "A health system is one of the most fundamental gameplay mechanics. Here's a complete Blueprint implementation.\n\n**Variables needed:**\n• MaxHealth (Float) = 100\n• CurrentHealth (Float) = 100\n• IsAlive (Boolean) = true\n\n**Functions to create:**\n\n1. **TakeDamage(Float DamageAmount)**\n   - Check IsAlive, if false: return\n   - Subtract DamageAmount from CurrentHealth\n   - Clamp CurrentHealth (0, MaxHealth)\n   - If CurrentHealth ≤ 0: Call OnDeath()\n   - Call OnHealthChanged Dispatcher\n\n2. **Heal(Float HealAmount)**\n   - Check IsAlive, if false: return\n   - Add HealAmount to CurrentHealth\n   - Clamp CurrentHealth (0, MaxHealth)\n   - Call OnHealthChanged Dispatcher\n\n3. **OnDeath()**\n   - Set IsAlive = false\n   - Play death animation\n   - Call OnDeath Dispatcher\n   - Set lifespan to auto-destroy\n\n**Dispatchers:**\n• OnHealthChanged (passes Float NewHealth, Float MaxHealth)\n• OnDeath\n\n**HUD connection:**\nBind to OnHealthChanged → Update health bar widget\n\n**Game Mode connection:**\nBind to OnDeath → Increment kill counter, check win condition",
-        xpReward: 320,
-        estimatedMinutes: 20,
-        tags: ["health", "damage", "gameplay"],
-        practiceTask: "Build the complete health system described above. Add a Billboard component that shows current health as text.",
+        title: "Система здоровья и урона",
+        description: "Создание полноценной системы здоровья с уроном и восстановлением",
+        content:
+          "Система здоровья — одна из самых базовых механик в играх. Реализуем её правильно.\n\n**Компонент здоровья:**\nЛучшая практика — вынести здоровье в Actor Component, а не хранить в персонаже напрямую. Так любой Actor может иметь здоровье.\n\n**Переменные:**\n• CurrentHealth (Float)\n• MaxHealth (Float)\n• bIsDead (Boolean)\n• DamageMultiplier (Float, default 1.0)\n\n**Функция TakeDamage:**\n```\nTakeDamage(Amount: Float):\n  if bIsDead → return\n  FinalDamage = Amount * DamageMultiplier\n  CurrentHealth = Clamp(CurrentHealth - FinalDamage, 0, MaxHealth)\n  if CurrentHealth <= 0 → Die()\n  Call OnHealthChanged Dispatcher\n```\n\n**Функция Heal:**\n```\nHeal(Amount: Float):\n  if bIsDead → return\n  CurrentHealth = Clamp(CurrentHealth + Amount, 0, MaxHealth)\n  Call OnHealthChanged\n```\n\n**Смерть:**\nУстановите bIsDead = true, отключите коллизию, запустите анимацию смерти, через Delay → Destroy Actor.",
+        xpReward: 220,
+        estimatedMinutes: 18,
+        tags: ["здоровье", "урон", "геймплей"],
+        realWorldExample:
+          "Dark Souls: CurrentHealth уменьшается от урона, Dead = true → анимация смерти → спавн у костра. Эстус фляга — Heal с анимацией.",
+        practiceTask:
+          "Создайте BP с переменными CurrentHealth/MaxHealth. Функция TakeDamage вычитает здоровье. При достижении 0 — Print 'Dead'. Протестируйте с разными значениями урона.",
         quizQuestions: [
           {
-            id: "q019",
-            question: "Why should you clamp CurrentHealth after taking damage?",
+            id: "q031",
+            question: "Почему лучше вынести систему здоровья в Actor Component?",
             options: [
-              "To improve performance",
-              "To prevent health going below 0 or above MaxHealth",
-              "Clamping is optional decoration",
-              "To trigger animations"
+              "Компоненты работают быстрее переменных",
+              "Любой Actor может иметь здоровье без дублирования кода",
+              "Component обязателен для работы Physics",
+              "Только Component может хранить Float",
             ],
             correctIndex: 1,
-            explanation: "Clamping ensures CurrentHealth stays within valid bounds (0 to MaxHealth), preventing negative health or health exceeding the maximum."
-          }
-        ]
-      },
-      {
-        id: "les_012",
-        moduleId: "mod_gameplay",
-        title: "Line Trace (Raycasting)",
-        description: "Shoot invisible rays to detect objects, enemies, and surfaces",
-        content: "Line Trace (raycasting) shoots an invisible ray from point A to point B and reports what it hit. It's used for:\n• Shooting weapons\n• Interaction detection\n• Ground checks\n• Wall detection\n• AI visibility checks\n\n**Line Trace By Channel:**\nInputs: Start (Vector), End (Vector), Trace Channel\nOutputs: Return Value (Bool hit something), Hit Result (struct)\n\n**Hit Result breakdown:**\n• Hit Actor — What was hit\n• Hit Component — Which component\n• Impact Point — World location of hit\n• Impact Normal — Surface normal at hit point\n• Distance — How far the hit is\n\n**Weapon Shooting Pattern:**\n```\nCamera Location → Camera Forward × TraceRange = End\nLineTrace → Hit Result → Cast To Enemy → TakeDamage\n```\n\n**DrawDebugLine:**\nUse for development! Visualizes where your trace goes.\n\n**Trace Channels:**\n• Visibility — Hits visible mesh\n• Camera — Camera-specific traces\n• Custom — Create your own channels\n\n**Multi Line Trace:**\nReturns all actors hit along the path, not just the first.\n\n**Sphere/Box/Capsule Trace:**\nShapes instead of a single point — better for area effects.",
-        xpReward: 300,
-        estimatedMinutes: 18,
-        tags: ["linetrace", "raycasting", "physics"],
-        quizQuestions: [
+            explanation: "Actor Component позволяет переиспользовать логику здоровья у врагов, игрока, разрушаемых объектов.",
+          },
           {
-            id: "q020",
-            question: "What does Line Trace return when it hits nothing?",
+            id: "q032",
+            question: "Зачем использовать Clamp при изменении здоровья?",
             options: [
-              "A crash",
-              "Zero vector",
-              "False (the boolean return value)",
-              "It always hits something"
+              "Для оптимизации вычислений",
+              "Чтобы здоровье не выходило за допустимый диапазон (0 - MaxHealth)",
+              "Clamp обязателен для Float-переменных",
+              "Для совместимости с разными платформами",
+            ],
+            correctIndex: 1,
+            explanation: "Clamp ограничивает значение диапазоном — здоровье не уйдёт ниже 0 или выше максимума.",
+          },
+          {
+            id: "q033",
+            question: "Что нужно сделать ПЕРВЫМ делом при получении урона, если объект уже мёртв?",
+            options: [
+              "Уменьшить здоровье как обычно",
+              "Вызвать анимацию смерти снова",
+              "Прервать выполнение (return) — мёртвый не получает урон",
+              "Вызвать Respawn",
             ],
             correctIndex: 2,
-            explanation: "Line Trace returns False as its boolean output when it hits nothing. Always check this before using the Hit Result."
-          }
-        ]
-      }
-    ]
+            explanation:
+              "Проверяйте bIsDead в начале TakeDamage — мёртвый Actor не должен получать урон и снова умирать.",
+          },
+        ],
+        buildChallenge: {
+          instruction:
+            "Постройте систему урона: TakeDamage Event → Subtract from Health → Clamp(0, MaxHealth) → Branch (Health <= 0) → [True] Print 'Умер' / [False] Print 'HP: X'",
+          hint: "Узел Clamp зажимает значение здоровья. Результат Clamp идёт в Set CurrentHealth и в Branch для проверки смерти.",
+          nodes: [
+            {
+              id: "n1",
+              title: "Event TakeDamage",
+              nodeType: "event",
+              inputs: [],
+              outputs: [
+                { id: "exec", label: "Exec", type: "exec" },
+                { id: "amount", label: "DamageAmount", type: "float" },
+              ],
+              x: 10,
+              y: 90,
+            },
+            {
+              id: "n2",
+              title: "Float - Float",
+              subtitle: "HP - Damage",
+              nodeType: "value",
+              inputs: [
+                { id: "a", label: "A", type: "float" },
+                { id: "b", label: "B", type: "float" },
+              ],
+              outputs: [{ id: "result", label: "Result", type: "float" }],
+              x: 185,
+              y: 130,
+            },
+            {
+              id: "n3",
+              title: "Clamp (Float)",
+              nodeType: "function",
+              inputs: [
+                { id: "val", label: "Value", type: "float" },
+                { id: "min", label: "Min", type: "float" },
+                { id: "max", label: "Max", type: "float" },
+              ],
+              outputs: [{ id: "result", label: "Return", type: "float" }],
+              x: 340,
+              y: 110,
+            },
+            {
+              id: "n4",
+              title: "Branch",
+              nodeType: "flow",
+              inputs: [
+                { id: "exec", label: "Exec", type: "exec" },
+                { id: "cond", label: "Condition", type: "bool" },
+              ],
+              outputs: [
+                { id: "true", label: "True", type: "exec" },
+                { id: "false", label: "False", type: "exec" },
+              ],
+              x: 500,
+              y: 70,
+            },
+          ],
+          solution: [
+            { fromNodeId: "n1", fromPinId: "exec", toNodeId: "n4", toPinId: "exec" },
+            { fromNodeId: "n2", fromPinId: "result", toNodeId: "n3", toPinId: "val" },
+            { fromNodeId: "n1", fromPinId: "amount", toNodeId: "n2", toPinId: "b" },
+            { fromNodeId: "n3", fromPinId: "result", toNodeId: "n4", toPinId: "cond" },
+          ],
+        },
+      },
+    ],
   },
   {
     id: "mod_ui",
-    title: "UI & Widget Blueprint",
-    description: "Build HUDs, menus, inventory screens, and interactive UI",
+    title: "UI и Widget Blueprint",
+    description: "Создание интерфейсов пользователя через Widget Blueprint",
     icon: "monitor",
     difficulty: "intermediate",
-    color: "#00D4FF",
+    color: "#C879FF",
     xpRequired: 1500,
     lessons: [
       {
-        id: "les_013",
+        id: "les_012",
         moduleId: "mod_ui",
-        title: "Widget Blueprint Basics",
-        description: "Create health bars, ammo counters, and HUD elements",
-        content: "Widget Blueprints are the UE5 UI system. They combine a visual designer with Blueprint logic.\n\n**Creating a Widget:**\n1. Content Browser → Add → User Interface → Widget Blueprint\n2. Open Widget Designer — drag and drop components\n3. Switch to Graph to add logic\n\n**Common Widget Components:**\n• Text Block — Display text\n• Image — Show textures/icons\n• Progress Bar — Health, loading, exp bars\n• Button — Clickable interaction\n• Vertical/Horizontal Box — Layout containers\n• Canvas Panel — Free positioning\n• Scroll Box — Scrollable content\n\n**Binding Widget to Game Data:**\nOption 1: Binding (easiest)\n• Click bind on a widget property\n• Return the value from your game variable\n• Updates every tick (performance cost)\n\nOption 2: Event-driven (recommended)\n• Listen for OnHealthChanged Dispatcher\n• Update widget manually when event fires\n• Much more performant\n\n**Adding Widget to Screen:**\nCreate Widget → Add to Viewport\n\n**Removing Widget:**\nRemove From Parent\n\n**Best Practice:** Create widgets in Player Controller or HUD class, not in the Character Blueprint. Keep UI separated from gameplay logic.",
-        xpReward: 280,
-        estimatedMinutes: 16,
-        tags: ["ui", "widget", "hud"],
+        title: "Widget Blueprint основы",
+        description: "Создание HUD и меню через UMG Widget Blueprint",
+        content:
+          "Widget Blueprint (UMG — Unreal Motion Graphics) — система создания UI в UE5.\n\n**Создание Widget:**\nContent Browser → ПКМ → User Interface → Widget Blueprint\n\n**Основные компоненты UMG:**\n• Text Block — отображение текста (HP: 100)\n• Image — изображение, иконка\n• Button — кнопка с событием OnClicked\n• Progress Bar — полоса прогресса (здоровье, опыт)\n• Canvas Panel — свободное размещение элементов\n• Vertical/Horizontal Box — автоматический layout\n• Grid Panel — сетка для инвентаря\n\n**Привязка данных (Binding):**\nText Block может быть привязан к функции Blueprint.\n\n```\nBind → GetHealthText():\n  return «HP: » + ToString(CurrentHealth)\n```\n\n**Добавление виджета на экран:**\n```\nCreate Widget (class: WBP_HUD)\n→ Add to Viewport\n```\n\n**Анимации в UMG:**\nUMG имеет встроенный редактор анимаций. Можно анимировать позицию, прозрачность, цвет любого элемента.",
+        xpReward: 240,
+        estimatedMinutes: 20,
+        tags: ["ui", "widget", "umg", "hud"],
+        realWorldExample:
+          "Полоска HP привязана к CurrentHealth через Binding — обновляется автоматически. Кнопка паузы OnClicked → Set Game Paused → показать меню.",
+        practiceTask:
+          "Создайте WBP_HUD с Progress Bar для здоровья. Привяжите Percent к функции, возвращающей CurrentHealth / MaxHealth. Добавьте виджет на экран из BP_Character в BeginPlay.",
         quizQuestions: [
           {
-            id: "q021",
-            question: "Why is the event-driven approach preferred over bindings for widgets?",
+            id: "q034",
+            question: "Какой компонент UMG используется для отображения полосы прогресса здоровья?",
+            options: ["Text Block", "Slider", "Progress Bar", "Canvas Panel"],
+            correctIndex: 2,
+            explanation: "Progress Bar отображает значение от 0.0 до 1.0 в виде заполненной полосы.",
+          },
+          {
+            id: "q035",
+            question: "Как добавить Widget Blueprint на экран игрока?",
             options: [
-              "Bindings look better in the designer",
-              "Event-driven updates only when needed, bindings check every tick (performance)",
-              "Events work on mobile, bindings don't",
-              "Bindings require C++ code"
+              "Drag & Drop в Viewport",
+              "Create Widget → Add to Viewport",
+              "Автоматически при создании виджета",
+              "Через Camera Component",
             ],
             correctIndex: 1,
-            explanation: "Bindings evaluate every frame (60+ times/sec). Event-driven updates only fire when data actually changes, using far less CPU."
-          }
-        ]
-      }
-    ]
+            explanation: "Create Widget создаёт экземпляр виджета, Add to Viewport отображает его на экране.",
+          },
+          {
+            id: "q036",
+            question: "Что такое Binding в контексте UMG?",
+            options: [
+              "Привязка виджета к Actor",
+              "Привязка значения свойства к функции для автоматического обновления",
+              "Связь между кнопкой и событием",
+              "Импорт шрифтов",
+            ],
+            correctIndex: 1,
+            explanation: "Binding связывает свойство UI-элемента с функцией — значение обновляется каждый кадр автоматически.",
+          },
+        ],
+        buildChallenge: {
+          instruction:
+            "Постройте показ UI: BeginPlay → Create WBP_HUD Widget → Add to Viewport. Передайте ссылку на персонажа в виджет через Set Owning Player.",
+          hint: "Create Widget имеет пин Owning Player — передайте туда Get Player Controller. Затем Exec → Add to Viewport.",
+          nodes: [
+            {
+              id: "n1",
+              title: "Event BeginPlay",
+              nodeType: "event",
+              inputs: [],
+              outputs: [{ id: "exec", label: "Exec", type: "exec" }],
+              x: 10,
+              y: 90,
+            },
+            {
+              id: "n2",
+              title: "Create Widget",
+              subtitle: "WBP_HUD",
+              nodeType: "function",
+              inputs: [
+                { id: "exec", label: "Exec", type: "exec" },
+                { id: "owner", label: "Owning Player", type: "object" },
+              ],
+              outputs: [
+                { id: "exec", label: "Exec", type: "exec" },
+                { id: "widget", label: "Return Value", type: "object" },
+              ],
+              x: 185,
+              y: 65,
+            },
+            {
+              id: "n3",
+              title: "Get Player Controller",
+              nodeType: "function",
+              inputs: [],
+              outputs: [{ id: "ctrl", label: "Player Controller", type: "object" }],
+              x: 10,
+              y: 195,
+            },
+            {
+              id: "n4",
+              title: "Add to Viewport",
+              nodeType: "function",
+              inputs: [
+                { id: "exec", label: "Exec", type: "exec" },
+                { id: "target", label: "Target", type: "object" },
+              ],
+              outputs: [{ id: "exec", label: "Exec", type: "exec" }],
+              x: 380,
+              y: 65,
+            },
+          ],
+          solution: [
+            { fromNodeId: "n1", fromPinId: "exec", toNodeId: "n2", toPinId: "exec" },
+            { fromNodeId: "n3", fromPinId: "ctrl", toNodeId: "n2", toPinId: "owner" },
+            { fromNodeId: "n2", fromPinId: "exec", toNodeId: "n4", toPinId: "exec" },
+            { fromNodeId: "n2", fromPinId: "widget", toNodeId: "n4", toPinId: "target" },
+          ],
+        },
+      },
+    ],
   },
   {
     id: "mod_ai",
-    title: "AI Blueprint Basics",
-    description: "Behavior trees, blackboards, and simple AI enemies",
-    icon: "cpu",
+    title: "AI на Blueprint",
+    description: "Создание поведения врагов с помощью Blueprint AI",
+    icon: "eye",
     difficulty: "advanced",
     color: "#7B4FFF",
     xpRequired: 2000,
     lessons: [
       {
-        id: "les_014",
+        id: "les_013",
         moduleId: "mod_ai",
-        title: "Behavior Trees & Blackboards",
-        description: "Build intelligent enemy AI with behavior trees",
-        content: "Unreal Engine's AI system is built around two key assets: Behavior Trees and Blackboards.\n\n**Blackboard:**\nA shared memory space — like a whiteboard the AI can read and write.\nKeys: PlayerActor (Object), LastKnownLocation (Vector), IsPlayerInRange (Boolean), AIState (Name)\n\n**Behavior Tree:**\nA graph that defines how the AI makes decisions. Processes from left to right, top to bottom.\n\n**Behavior Tree Nodes:**\n• Selector (?) — Tries children left to right, stops at first success\n• Sequence (→) — Runs children in order, stops at first failure\n• Task — Leaf node that does something (Move To, Wait, Custom tasks)\n• Decorator — Condition attached to any node (Check BB Key, Is In Range)\n• Service — Runs repeatedly while branch is active (Update Target Location)\n\n**Simple Chase AI setup:**\n```\nRoot → Selector\n  ├── Sequence (Chase Player)\n  │   ├── [Decorator: IsPlayerInRange = true]\n  │   └── Task: Move To (Target: PlayerActor)\n  └── Sequence (Patrol)\n      └── Task: Move To (Target: PatrolPoint)\n```\n\n**AI Controller:**\nAll AI needs an AI Controller. Assign your Behavior Tree in BeginPlay using Run Behavior Tree.\n\n**Pawn Sensing:**\nUse PawnSensingComponent to detect players visually or by sound. Binds to OnSeePawn event.",
-        xpReward: 400,
-        estimatedMinutes: 25,
-        tags: ["ai", "behavior-tree", "enemy"],
+        title: "Behavior Tree основы",
+        description: "Создание ИИ-поведения через Behavior Tree и Blueprint",
+        content:
+          "Behavior Tree (дерево поведения) — стандарт для ИИ в UE5. Комбинируется с Blueprint для гибкого поведения.\n\n**Компоненты системы AI:**\n• AIController — управляет Pawn, имеет AI-логику\n• Behavior Tree — дерево решений\n• Blackboard — «память» AI, хранит переменные\n• Tasks — листовые узлы дерева (Move To, Wait, Attack)\n• Decorators — условия (Is Player In Range, Has Ammo)\n• Services — периодически обновляют Blackboard\n\n**Структура Behavior Tree:**\n```\nRoot\n└── Selector\n    ├── [Decorator: SeePlayer] → Sequence\n    │   ├── Task: Chase Player\n    │   └── Task: Attack\n    └── Task: Patrol\n```\n\n**Blueprint Tasks:**\nВы можете создавать Blueprint BTTask:\n1. Content Browser → ПКМ → AI → Behavior Tree Task\n2. Переопределите ExecuteTask\n3. При завершении вызовите Finish Execute (Success/Fail)\n\n**Blackboard Keys:**\nBB хранит данные: PlayerActor (Object), LastKnownLocation (Vector), IsAlert (Bool). Services обновляют их, Tasks используют.",
+        xpReward: 280,
+        estimatedMinutes: 22,
+        tags: ["ai", "behavior tree", "blackboard"],
+        realWorldExample:
+          "Охранник: патрулирует (Patrol Task) → замечает игрока (EQS + Decorator) → преследует (Move To Player) → атакует (Attack Task) → теряет (Clear Blackboard Key) → возвращается.",
+        practiceTask:
+          "Создайте AIController с Behavior Tree. Добавьте задачу патрулирования: случайная точка на NavMesh → Move To. Подключите Behavior Tree к AI через AIController BeginPlay.",
         quizQuestions: [
           {
-            id: "q022",
-            question: "What does a Blackboard store in the AI system?",
+            id: "q037",
+            question: "Что такое Blackboard в контексте Behavior Tree?",
             options: [
-              "The visual appearance of the AI",
-              "Shared data the AI can read and write — like player location, states",
-              "The enemy's health points",
-              "Animation sequences"
+              "Визуальный редактор дерева поведения",
+              "Хранилище данных для ИИ — переменные, доступные всему дереву",
+              "Компонент для рендеринга отладочной информации",
+              "Тип AIController",
             ],
             correctIndex: 1,
-            explanation: "The Blackboard is a shared data store for the AI — it holds keys like PlayerActor, LastKnownLocation, and IsPlayerInRange that the Behavior Tree reads."
-          }
-        ]
-      }
-    ]
+            explanation: "Blackboard — «память» ИИ. Хранит переменные (позиция игрока, состояние тревоги), которые используют узлы дерева.",
+          },
+          {
+            id: "q038",
+            question: "Что делает Decorator в Behavior Tree?",
+            options: [
+              "Рисует отладочную информацию",
+              "Украшает узел для читаемости",
+              "Условие выполнения ветки — разрешает или блокирует",
+              "Выполняет периодические обновления",
+            ],
+            correctIndex: 2,
+            explanation: "Decorator — условие на узле BT. Если условие не выполнено — ветка пропускается.",
+          },
+          {
+            id: "q039",
+            question: "Что нужно вызвать в конце Blueprint BTTask для завершения задачи?",
+            options: ["Return Node", "End Task", "Finish Execute (Success или Fail)", "Complete Task"],
+            correctIndex: 2,
+            explanation:
+              "Finish Execute с параметром Success (true) или Fail (false) сигнализирует BT о завершении задачи.",
+          },
+        ],
+        buildChallenge: {
+          instruction:
+            "Постройте запуск AI: BeginPlay → Run Behavior Tree → AIController получает ссылку на Blackboard → Set Blackboard Value (PlayerRef).",
+          hint: "Run Behavior Tree принимает BTAsset. После запуска обновите Blackboard через Get Blackboard → Set Value As Object.",
+          nodes: [
+            {
+              id: "n1",
+              title: "Event BeginPlay",
+              nodeType: "event",
+              inputs: [],
+              outputs: [{ id: "exec", label: "Exec", type: "exec" }],
+              x: 10,
+              y: 80,
+            },
+            {
+              id: "n2",
+              title: "Run Behavior Tree",
+              nodeType: "function",
+              inputs: [
+                { id: "exec", label: "Exec", type: "exec" },
+                { id: "bt", label: "BTAsset", type: "object" },
+              ],
+              outputs: [{ id: "exec", label: "Exec", type: "exec" }],
+              x: 185,
+              y: 55,
+            },
+            {
+              id: "n3",
+              title: "Get Blackboard",
+              nodeType: "function",
+              inputs: [],
+              outputs: [{ id: "bb", label: "Blackboard", type: "object" }],
+              x: 185,
+              y: 165,
+            },
+            {
+              id: "n4",
+              title: "Set Value As Object",
+              subtitle: "PlayerRef",
+              nodeType: "function",
+              inputs: [
+                { id: "exec", label: "Exec", type: "exec" },
+                { id: "target", label: "Target", type: "object" },
+                { id: "val", label: "Value", type: "object" },
+              ],
+              outputs: [{ id: "exec", label: "Exec", type: "exec" }],
+              x: 370,
+              y: 55,
+            },
+          ],
+          solution: [
+            { fromNodeId: "n1", fromPinId: "exec", toNodeId: "n2", toPinId: "exec" },
+            { fromNodeId: "n2", fromPinId: "exec", toNodeId: "n4", toPinId: "exec" },
+            { fromNodeId: "n3", fromPinId: "bb", toNodeId: "n4", toPinId: "target" },
+          ],
+        },
+      },
+    ],
   },
   {
     id: "mod_optimization",
-    title: "Optimization & Best Practices",
-    description: "Write efficient Blueprints, avoid common mistakes, debug like a pro",
-    icon: "trending-up",
+    title: "Оптимизация Blueprint",
+    description: "Лучшие практики и оптимизация производительности Blueprint",
+    icon: "zap",
     difficulty: "expert",
     color: "#FFB800",
     xpRequired: 3000,
     lessons: [
       {
-        id: "les_015",
+        id: "les_014",
         moduleId: "mod_optimization",
-        title: "Blueprint Optimization",
-        description: "Avoid common performance pitfalls and write efficient Blueprints",
-        content: "Blueprints are powerful but can become performance bottlenecks if not optimized. Here are the most important practices.\n\n**NEVER do these in Tick:**\n• GetAllActorsOfClass — Expensive O(n) scan every frame\n• Cast To — Cache the result in BeginPlay\n• Overlap events searching the whole world\n• Heavy string operations\n• Creating/Destroying actors (use object pooling)\n\n**Use Events, Not Tick:**\nIf you're doing something in Tick that could be triggered by an event, use the event.\nBAD: Check overlap in Tick → GOOD: Use OnComponentBeginOverlap event\n\n**Set Timer by Function Name:**\nInstead of checking a condition in Tick, set a timer to check periodically.\n\n**Object Pooling:**\nDon't Spawn/Destroy actors constantly. Create a pool of pre-spawned actors, activate/deactivate as needed.\n\n**LOD & Disable Tick:**\nDisable tick on actors that don't need it. Set minimum tick interval for non-critical Blueprints.\n\n**Blueprint Nativization (Legacy):**\nConvert hot Blueprints to C++ for critical paths.\n\n**Profiling Tools:**\n• Stat Game — Show frame times\n• Blueprint Profiler — Find expensive nodes\n• GPU Visualizer — GPU bottlenecks\n\n**Common Mistakes:**\n• Using Delay in Tick\n• Not using Is Valid before accessing actors\n• Forgetting to Unbind dispatchers (memory leaks)\n• Using String comparison instead of Name comparison",
-        xpReward: 500,
-        estimatedMinutes: 20,
-        tags: ["optimization", "performance", "best-practices"],
+        title: "Профилирование и оптимизация",
+        description: "Поиск узких мест и оптимизация Blueprint-графов",
+        content:
+          "Неоптимизированный Blueprint может убить производительность. Научитесь находить и устранять узкие места.\n\n**Инструменты профилирования:**\n• stat fps / stat unit — базовые метрики в реальном времени\n• Blueprint Profiler — встроенный профайлер Blueprint (Window → Developer Tools → Blueprint Profiler)\n• Session Frontend → Profiler — детальный анализ CPU/GPU\n\n**Частые ошибки Blueprint:**\n\n1. Тяжёлый Tick\nGetAllActorsOfClass в Tick — O(N) каждый кадр. Кэшируйте результат в BeginPlay!\n\n2. Частый Cast в Tick\nCast дорогой. Выполните один раз, сохраните в переменную.\n\n3. Spawn в Tick\nSpawning Actor каждый кадр = гарантированный лаг. Используйте Object Pooling.\n\n4. Слишком много Tick-объектов\nОтключите Tick у объектов, которым он не нужен: Begin Play → Set Actor Tick Enabled (false).\n\n**Blueprint vs C++:**\nBlueprint: разработка быстрее, C++: выполнение быстрее. Критичную логику (тысячи вызовов/сек) переносите в C++. Blueprint вызывает нативную функцию без накладных расходов.\n\n**Nativization:**\nUE5 может скомпилировать Blueprint в C++ автоматически (Project Settings → Packaging → Blueprint Nativization).",
+        xpReward: 320,
+        estimatedMinutes: 25,
+        tags: ["оптимизация", "производительность", "профилирование"],
+        realWorldExample:
+          "В шутере от первого лица: Tick врагов отключён пока игрок далеко (Distance Culling). При входе в радиус — включается. 50 врагов → только 5 активных = 10x экономия.",
+        practiceTask:
+          "Откройте Blueprint Profiler. Создайте намеренно «плохой» Blueprint с GetAllActors в Tick. Запустите профилер и найдите узкое место. Исправьте, кэшировав результат.",
         quizQuestions: [
           {
-            id: "q023",
-            question: "Why is GetAllActorsOfClass dangerous in Tick?",
+            id: "q040",
+            question: "Почему GetAllActorsOfClass нельзя вызывать в Event Tick?",
             options: [
-              "It crashes the engine",
-              "It scans ALL actors in the level every frame — very expensive",
-              "It only works in C++",
-              "It returns outdated data"
+              "Функция работает только в BeginPlay",
+              "Это O(N) операция каждый кадр — огромная нагрузка на CPU",
+              "Функция не возвращает актуальные данные в Tick",
+              "Ограничение движка",
             ],
             correctIndex: 1,
-            explanation: "GetAllActorsOfClass iterates through every actor in the level. Called 60 times/second in Tick, this is extremely expensive. Cache results or use a manager pattern instead."
-          }
-        ]
-      }
-    ]
-  }
+            explanation:
+              "GetAllActorsOfClass перебирает все объекты уровня каждый кадр. При 60fps и сотнях объектов — критичная нагрузка. Кэшируйте в BeginPlay.",
+          },
+          {
+            id: "q041",
+            question: "Что такое Blueprint Nativization?",
+            options: [
+              "Конвертация C++ в Blueprint",
+              "Автоматическая компиляция Blueprint в C++ при packaging",
+              "Удаление Blueprint из сборки",
+              "Оптимизация текстур Blueprint",
+            ],
+            correctIndex: 1,
+            explanation:
+              "Blueprint Nativization конвертирует BP в C++ при сборке — Blueprint пишется удобно, а работает как нативный код.",
+          },
+          {
+            id: "q042",
+            question: "Как уменьшить нагрузку от большого числа Actor-ов с Tick?",
+            options: [
+              "Увеличить framerate",
+              "Отключить Tick у далёких/неактивных Actor-ов через Set Actor Tick Enabled",
+              "Удалить все Actor-ы из уровня",
+              "Уменьшить MaxHealth всех Actor-ов",
+            ],
+            correctIndex: 1,
+            explanation:
+              "Отключайте Tick у неактивных объектов (Set Actor Tick Enabled false) и включайте только когда нужно — Distance Culling паттерн.",
+          },
+        ],
+        buildChallenge: {
+          instruction:
+            "Постройте оптимизированную инициализацию: BeginPlay → Get All Actors Of Class → Set EnemiesCache → Set Tick Enabled (false) для каждого врага через For Each Loop.",
+          hint: "GetAllActors возвращает массив. For Each Loop перебирает его. Set Actor Tick Enabled (false) отключает Tick каждого врага. Это кэширование + оптимизация.",
+          nodes: [
+            {
+              id: "n1",
+              title: "Event BeginPlay",
+              nodeType: "event",
+              inputs: [],
+              outputs: [{ id: "exec", label: "Exec", type: "exec" }],
+              x: 10,
+              y: 90,
+            },
+            {
+              id: "n2",
+              title: "Get All Actors Of Class",
+              subtitle: "BP_Enemy",
+              nodeType: "function",
+              inputs: [{ id: "exec", label: "Exec", type: "exec" }],
+              outputs: [
+                { id: "exec", label: "Exec", type: "exec" },
+                { id: "actors", label: "Out Actors", type: "object" },
+              ],
+              x: 185,
+              y: 65,
+            },
+            {
+              id: "n3",
+              title: "For Each Loop",
+              nodeType: "flow",
+              inputs: [
+                { id: "exec", label: "Exec", type: "exec" },
+                { id: "arr", label: "Array", type: "object" },
+              ],
+              outputs: [
+                { id: "body", label: "Loop Body", type: "exec" },
+                { id: "elem", label: "Array Element", type: "object" },
+                { id: "done", label: "Completed", type: "exec" },
+              ],
+              x: 360,
+              y: 55,
+            },
+            {
+              id: "n4",
+              title: "Set Actor Tick Enabled",
+              nodeType: "function",
+              inputs: [
+                { id: "exec", label: "Exec", type: "exec" },
+                { id: "target", label: "Target", type: "object" },
+                { id: "enabled", label: "Enabled", type: "bool" },
+              ],
+              outputs: [{ id: "exec", label: "Exec", type: "exec" }],
+              x: 540,
+              y: 55,
+            },
+          ],
+          solution: [
+            { fromNodeId: "n1", fromPinId: "exec", toNodeId: "n2", toPinId: "exec" },
+            { fromNodeId: "n2", fromPinId: "exec", toNodeId: "n3", toPinId: "exec" },
+            { fromNodeId: "n2", fromPinId: "actors", toNodeId: "n3", toPinId: "arr" },
+            { fromNodeId: "n3", fromPinId: "body", toNodeId: "n4", toPinId: "exec" },
+            { fromNodeId: "n3", fromPinId: "elem", toNodeId: "n4", toPinId: "target" },
+          ],
+        },
+      },
+    ],
+  },
 ];
 
-export const REAL_WORLD_EXAMPLES = [
+export const ACHIEVEMENTS = [
+  {
+    id: "ach_first_lesson",
+    title: "Первый шаг",
+    description: "Завершите первый урок",
+    icon: "star",
+    condition: (stats: { totalLessons: number }) => stats.totalLessons >= 1,
+  },
+  {
+    id: "ach_five_lessons",
+    title: "Студент Blueprint",
+    description: "Завершите 5 уроков",
+    icon: "book-open",
+    condition: (stats: { totalLessons: number }) => stats.totalLessons >= 5,
+  },
+  {
+    id: "ach_all_beginner",
+    title: "Основы заложены",
+    description: "Завершите все уроки уровня Начинающий",
+    icon: "award",
+    condition: (stats: { totalLessons: number }) => stats.totalLessons >= 4,
+  },
+  {
+    id: "ach_streak_3",
+    title: "На волне",
+    description: "Поддерживайте серию 3 дня подряд",
+    icon: "zap",
+    condition: (stats: { streak: number }) => stats.streak >= 3,
+  },
+  {
+    id: "ach_streak_7",
+    title: "Неделя Blueprint",
+    description: "Серия 7 дней подряд",
+    icon: "trending-up",
+    condition: (stats: { streak: number }) => stats.streak >= 7,
+  },
+  {
+    id: "ach_perfect_quiz",
+    title: "Идеальный результат",
+    description: "Пройдите тест на 100%",
+    icon: "check-circle",
+    condition: (stats: { perfectQuizzes: number }) => stats.perfectQuizzes >= 1,
+  },
+  {
+    id: "ach_xp_500",
+    title: "Опытный",
+    description: "Накопите 500 XP",
+    icon: "activity",
+    condition: (stats: { xp: number }) => stats.xp >= 500,
+  },
+  {
+    id: "ach_xp_2000",
+    title: "Мастер Blueprint",
+    description: "Накопите 2000 XP",
+    icon: "cpu",
+    condition: (stats: { xp: number }) => stats.xp >= 2000,
+  },
+];
+
+export const EXAMPLES = [
   {
     id: "ex_001",
-    title: "Open Door by Trigger",
-    category: "Interaction",
+    title: "Вращающийся Actor",
+    description: "Плавно вращающийся объект с настраиваемой скоростью",
     difficulty: "beginner" as Difficulty,
-    description: "Create a door that opens when the player enters a trigger volume",
+    color: "#00D4FF",
     steps: [
-      "Create Box Trigger component on the door Actor",
-      "Bind OnComponentBeginOverlap event",
-      "Cast hit actor to BP_Character to verify it's the player",
-      "Play Timeline to smoothly rotate door",
-      "Bind OnComponentEndOverlap to close door"
+      "Создайте новый Blueprint Actor",
+      "Добавьте Static Mesh компонент",
+      "В Event Tick: Add Actor World Rotation",
+      "Создайте переменную RotationSpeed (Float, default 90.0)",
+      "Умножьте RotationSpeed на Delta Seconds (Get World Delta Seconds)",
+      "Передайте результат в пин Z компонента Delta Rotation",
+      "Установите Instance Editable = true для настройки на уровне",
     ],
-    nodes: ["Box Trigger", "OnComponentBeginOverlap", "Cast To", "Timeline", "SetRelativeRotation"],
-    color: "#39D353"
+    nodes: ["Event Tick", "Add Actor World Rotation", "Get World Delta Seconds", "Make Rotator", "Float * Float"],
+    tags: ["вращение", "Tick", "физика"],
   },
   {
     id: "ex_002",
-    title: "Health & Damage System",
-    category: "Gameplay",
+    title: "Открывающаяся дверь",
+    description: "Дверь открывается при входе игрока и закрывается при выходе",
     difficulty: "basic" as Difficulty,
-    description: "Complete health system with damage, healing, and death",
+    color: "#39D353",
     steps: [
-      "Add CurrentHealth and MaxHealth Float variables",
-      "Create TakeDamage function with Float input",
-      "Clamp health between 0 and MaxHealth",
-      "Create OnDeath custom event",
-      "Create OnHealthChanged dispatcher for HUD updates"
+      "Создайте BP_Door с Door Mesh и Box Collision",
+      "На OnComponentBeginOverlap: Cast To BP_ThirdPersonCharacter",
+      "При успешном Cast: Timeline (Float Track 0→1 за 0.5 сек)",
+      "Timeline Update: Set Relative Rotation двери (0 → 90 градусов)",
+      "OnComponentEndOverlap: Timeline Reverse",
+      "Используйте Lerp с Alpha из Timeline для плавности",
     ],
-    nodes: ["Variables", "Functions", "Clamp", "Event Dispatcher", "Branch"],
-    color: "#FF4757"
+    nodes: ["Box Collision", "Cast To Character", "Timeline", "Set Relative Rotation", "Lerp (Rotator)"],
+    tags: ["дверь", "overlap", "timeline"],
   },
   {
     id: "ex_003",
-    title: "Pickup System",
-    category: "Gameplay",
-    difficulty: "beginner" as Difficulty,
-    description: "Items the player can pick up to restore health or collect",
+    title: "Двойной прыжок",
+    description: "Система двойного прыжка с ограничением и анимацией",
+    difficulty: "intermediate" as Difficulty,
+    color: "#FFB800",
     steps: [
-      "Create Pickup Actor with Static Mesh and Sphere Collision",
-      "Bind OnComponentBeginOverlap",
-      "Implement IPickupable interface",
-      "Call interface function on overlapping actor",
-      "Destroy self after pickup with particle effect"
+      "Откройте BP_ThirdPersonCharacter",
+      "Создайте переменную JumpCount (Integer)",
+      "В событии Jump: Branch (JumpCount < 2)",
+      "При True: Launch Character вертикально + JumpCount++",
+      "В событии Landed: Reset JumpCount = 0",
+      "Добавьте эффект частиц через Spawn Emitter At Location",
     ],
-    nodes: ["Sphere Collision", "Interface", "DestroyActor", "SpawnEmitterAtLocation"],
-    color: "#00D4FF"
+    nodes: ["Jump", "Launch Character", "Landed", "Branch", "Integer + Integer", "Spawn Emitter"],
+    tags: ["прыжок", "персонаж", "движение"],
   },
   {
     id: "ex_004",
-    title: "Simple Shooting",
-    category: "Combat",
-    difficulty: "intermediate" as Difficulty,
-    description: "Hitscan weapon using line trace from camera",
+    title: "Подбираемый предмет",
+    description: "Предмет, который подбирает игрок с эффектами и звуком",
+    difficulty: "basic" as Difficulty,
+    color: "#7B4FFF",
     steps: [
-      "Get Camera Location and Forward Vector",
-      "Multiply forward vector by trace distance",
-      "Line Trace by Channel (Visibility)",
-      "Check if hit actor implements IDamageable",
-      "Call TakeDamage through interface"
+      "Blueprint Actor с Mesh и Sphere Collision",
+      "Event ActorBeginOverlap → Cast To Character",
+      "При успехе: добавьте предмет в инвентарь персонажа",
+      "Spawn звуковой эффект (Spawn Sound At Location)",
+      "Spawn визуальный эффект (Spawn Emitter At Location)",
+      "Destroy Actor — уничтожить предмет",
+      "Анимация: вращение в Tick + синусоидальное парение через Sin(Time)",
     ],
-    nodes: ["GetPlayerCamera", "LineTrace", "GetHitResultUnderCursor", "Interface Call", "DrawDebugLine"],
-    color: "#FF6B35"
+    nodes: ["Sphere Collision", "Cast To Character", "Spawn Sound", "Spawn Emitter", "Destroy Actor"],
+    tags: ["pickup", "инвентарь", "эффекты"],
   },
   {
     id: "ex_005",
-    title: "Simple Inventory",
-    category: "Systems",
+    title: "Простой UI здоровья",
+    description: "HUD с полоской здоровья, привязанной к персонажу",
     difficulty: "intermediate" as Difficulty,
-    description: "Array-based inventory system with add/remove",
+    color: "#FF4757",
     steps: [
-      "Create ItemData struct with Name, Icon, Quantity",
-      "Add Items array variable (Array of ItemData)",
-      "Create AddItem function — check stack limit",
-      "Create RemoveItem function — check quantity",
-      "Create OnInventoryChanged dispatcher for UI"
+      "Создайте WBP_HealthBar (Widget Blueprint)",
+      "Добавьте Progress Bar, Text Block для значения HP",
+      "Привяжите Percent к функции: CurrentHP / MaxHP",
+      "Привяжите Text к функции: ToString(CurrentHP) + '/' + ToString(MaxHP)",
+      "В BP_Character BeginPlay: Create WBP_HealthBar → Add to Viewport",
+      "Сохраните ссылку на виджет для последующего обновления",
     ],
-    nodes: ["Array", "Struct", "For Each Loop", "Find", "Dispatcher"],
-    color: "#7B4FFF"
+    nodes: ["Progress Bar Binding", "Create Widget", "Add to Viewport", "Text Binding", "Float / Float"],
+    tags: ["ui", "hud", "health"],
   },
   {
     id: "ex_006",
-    title: "Save & Load Game",
-    category: "Systems",
+    title: "Враг с патрулированием",
+    description: "ИИ-враг, патрулирующий между точками и реагирующий на игрока",
     difficulty: "advanced" as Difficulty,
-    description: "Persistent save game using SaveGame object",
+    color: "#FF6B35",
     steps: [
-      "Create SaveGame Blueprint class",
-      "Add variables to save: PlayerHealth, Level, Inventory",
-      "Create SaveGame function using Save Game to Slot",
-      "Create LoadGame function using Load Game from Slot",
-      "Call save on checkpoint overlap, load on game start"
+      "Создайте BP_Enemy с AIController",
+      "Добавьте массив PatrolPoints (массив Actor-ссылок)",
+      "В AIController BeginPlay: Run Behavior Tree",
+      "BTTask_Patrol: Get следующую точку, MoveToActor",
+      "PawnSensing Component: OnSeePawn → установить PlayerRef в Blackboard",
+      "Decorator на Chase ветке: Is Blackboard Key Set (PlayerRef)",
+      "При потере игрока: Clear Blackboard Value → вернуться к патрулированию",
     ],
-    nodes: ["SaveGameObject", "SaveGameToSlot", "LoadGameFromSlot", "Cast To SaveGame", "AsyncSaveGame"],
-    color: "#FFB800"
-  }
-];
-
-export function getDifficultyLabel(d: Difficulty): string {
-  switch (d) {
-    case "beginner": return "Beginner";
-    case "basic": return "Basic";
-    case "intermediate": return "Intermediate";
-    case "advanced": return "Advanced";
-    case "expert": return "Expert";
-  }
-}
-
-export function getDifficultyColor(d: Difficulty): string {
-  switch (d) {
-    case "beginner": return "#39D353";
-    case "basic": return "#00D4FF";
-    case "intermediate": return "#FFB800";
-    case "advanced": return "#FF6B35";
-    case "expert": return "#FF4757";
-  }
-}
-
-export const ACHIEVEMENTS = [
-  { id: "ach_001", title: "First Steps", description: "Complete your first lesson", icon: "star", xpRequired: 0, completedLessons: 1 },
-  { id: "ach_002", title: "Blueprint Novice", description: "Complete 5 lessons", icon: "award", xpRequired: 0, completedLessons: 5 },
-  { id: "ach_003", title: "Consistent Learner", description: "Maintain a 3-day streak", icon: "zap", xpRequired: 0, completedLessons: 0 },
-  { id: "ach_004", title: "Blueprint Apprentice", description: "Reach 500 XP", icon: "trending-up", xpRequired: 500, completedLessons: 0 },
-  { id: "ach_005", title: "Blueprint Developer", description: "Reach 1500 XP", icon: "code", xpRequired: 1500, completedLessons: 0 },
-  { id: "ach_006", title: "Quiz Master", description: "Score 100% on 5 quizzes", icon: "check-circle", xpRequired: 0, completedLessons: 0 },
-  { id: "ach_007", title: "Blueprint Architect", description: "Complete all basic modules", icon: "grid", xpRequired: 1000, completedLessons: 8 },
-  { id: "ach_008", title: "Blueprint Expert", description: "Reach 3000 XP", icon: "cpu", xpRequired: 3000, completedLessons: 0 },
+    nodes: ["Behavior Tree", "BTTask", "PawnSensing", "Move To Actor", "Blackboard", "Decorator"],
+    tags: ["ai", "патрулирование", "blackboard"],
+  },
 ];
