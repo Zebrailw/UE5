@@ -23,7 +23,7 @@ cd "$MOBILE_DIR"
 export EXPO_TOKEN
 
 echo "🔑 Expo account:"
-npx eas-cli whoami 2>&1 | grep -v "npm warn" || true
+npx --yes eas-cli whoami 2>&1 | grep -v "npm warn" || true
 echo ""
 
 echo "🚀 Starting EAS Build for Android APK..."
@@ -31,7 +31,7 @@ echo "   Profile: preview (produces .apk file)"
 echo "   Build runs in Expo cloud — takes 5–15 min."
 echo ""
 
-npx eas-cli build \
+npx --yes eas-cli build \
   --platform android \
   --profile preview \
   --non-interactive
