@@ -23,6 +23,8 @@ import { MODULES } from "@/data/curriculum";
 
 const C = Colors.dark;
 
+const BOOSTY_URL = "https://boosty.to/zebradf";
+
 const DONATION_TIERS = [
   {
     id: "coffee",
@@ -31,7 +33,7 @@ const DONATION_TIERS = [
     amount: "1$",
     description: "Угостить разработчика кофе",
     color: "#C8A96E",
-    url: "https://boosty.to",
+    url: BOOSTY_URL,
   },
   {
     id: "pizza",
@@ -40,7 +42,7 @@ const DONATION_TIERS = [
     amount: "5$",
     description: "Поддержать новые уроки",
     color: "#FF6B35",
-    url: "https://boosty.to",
+    url: BOOSTY_URL,
   },
   {
     id: "hero",
@@ -49,7 +51,7 @@ const DONATION_TIERS = [
     amount: "15$",
     description: "Вы — легенда Blueprint Academy!",
     color: "#00D4FF",
-    url: "https://boosty.to",
+    url: BOOSTY_URL,
   },
 ];
 
@@ -133,7 +135,7 @@ function DonationModal({ visible, onClose }: { visible: boolean; onClose: () => 
             ]}
             onPress={() => {
               onClose();
-              Linking.openURL("https://boosty.to");
+              Linking.openURL(BOOSTY_URL);
             }}
           >
             <LinearGradient
@@ -343,7 +345,12 @@ export default function ProfileScreen() {
             <SettingRow
               icon="message-circle"
               label="Написать разработчику"
-              onPress={() => Linking.openURL("mailto:dev@ue5academy.app")}
+              onPress={() => Linking.openURL("mailto:zebrailwkottop@gmail.com")}
+            />
+            <SettingRow
+              icon="heart"
+              label="Поддержать на Boosty"
+              onPress={() => Linking.openURL(BOOSTY_URL)}
             />
           </View>
         </Animated.View>

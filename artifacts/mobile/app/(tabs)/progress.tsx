@@ -17,6 +17,39 @@ import { ACHIEVEMENTS, MODULES, getDifficultyColor } from "@/data/curriculum";
 
 const C = Colors.dark;
 
+const MODULE_CATEGORIES = [
+  {
+    id: "foundation",
+    label: "🎯 Фундамент Blueprint",
+    color: "#00D4FF",
+    moduleIds: ["mod_intro", "mod_nodes", "mod_vars"],
+  },
+  {
+    id: "player",
+    label: "🏃 Работа с Игроком",
+    color: "#39D353",
+    moduleIds: ["mod_functions", "mod_comm"],
+  },
+  {
+    id: "world",
+    label: "🌍 Геймплей и Мир",
+    color: "#FFB800",
+    moduleIds: ["mod_gameplay", "mod_ai"],
+  },
+  {
+    id: "ui",
+    label: "🎨 Интерфейс (UI)",
+    color: "#FF6B35",
+    moduleIds: ["mod_ui"],
+  },
+  {
+    id: "advanced",
+    label: "⚡ Продвинутые системы",
+    color: "#FF4757",
+    moduleIds: ["mod_optimization"],
+  },
+];
+
 function ProgressRing({ percentage, size = 80, color = C.tint, label }: {
   percentage: number; size?: number; color?: string; label: string;
 }) {
@@ -96,7 +129,7 @@ export default function ProgressScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.screenTitle}>Your Progress</Text>
+        <Text style={styles.screenTitle}>Мой прогресс</Text>
 
         <Animated.View entering={FadeInDown.delay(50)} style={styles.heroCard}>
           <LinearGradient
@@ -107,32 +140,32 @@ export default function ProgressScreen() {
           />
           <View style={styles.heroTop}>
             <View>
-              <Text style={styles.heroLevel}>Level {level}</Text>
-              <Text style={styles.heroXP}>{xp.toLocaleString()} total XP</Text>
+              <Text style={styles.heroLevel}>Уровень {level}</Text>
+              <Text style={styles.heroXP}>{xp.toLocaleString()} XP всего</Text>
             </View>
             <View style={styles.heroStats}>
               <View style={styles.heroStat}>
                 <Feather name="zap" size={16} color={C.warning} />
                 <Text style={styles.heroStatVal}>{streak}</Text>
-                <Text style={styles.heroStatLabel}>Streak</Text>
+                <Text style={styles.heroStatLabel}>Серия</Text>
               </View>
               <View style={styles.heroStat}>
                 <Feather name="check-circle" size={16} color={C.success} />
                 <Text style={styles.heroStatVal}>{totalCompleted}</Text>
-                <Text style={styles.heroStatLabel}>Done</Text>
+                <Text style={styles.heroStatLabel}>Пройдено</Text>
               </View>
               <View style={styles.heroStat}>
                 <Feather name="award" size={16} color={C.accent} />
                 <Text style={styles.heroStatVal}>{unlockedAchievements.length}</Text>
-                <Text style={styles.heroStatLabel}>Badges</Text>
+                <Text style={styles.heroStatLabel}>Значки</Text>
               </View>
             </View>
           </View>
 
           <View style={styles.levelProgressSection}>
             <View style={styles.levelLabels}>
-              <Text style={styles.levelLabel}>Level {level}</Text>
-              <Text style={styles.levelLabel}>Level {level + 1}</Text>
+              <Text style={styles.levelLabel}>Уровень {level}</Text>
+              <Text style={styles.levelLabel}>Уровень {level + 1}</Text>
             </View>
             <View style={styles.levelTrack}>
               <Animated.View
@@ -146,71 +179,89 @@ export default function ProgressScreen() {
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(100)}>
-          <Text style={styles.sectionTitle}>Module Progress</Text>
-          {MODULES.map((mod, i) => {
-            const unlocked = isModuleUnlocked(mod.id);
-            const completedCount = mod.lessons.filter((l) => isLessonCompleted(l.id)).length;
-            const pct = mod.lessons.length > 0 ? completedCount / mod.lessons.length : 0;
+          <Text style={styles.sectionTitle}>Прогресс по модулям</Text>
+          {MODULE_CATEGORIES.map((cat) => {
+            const catMods = MODULES.filter((m) => cat.moduleIds.includes(m.id));
+            const catTotal = catMods.reduce((acc, m) => acc + m.lessons.length, 0);
+            const catDone = catMods.reduce(
+              (acc, m) => acc + m.lessons.filter((l) => isLessonCompleted(l.id)).length,
+              0
+            );
+            const catPct = catTotal > 0 ? Math.round((catDone / catTotal) * 100) : 0;
             return (
-              <View key={mod.id} style={styles.moduleProgressCard}>
-                <View style={[styles.modIcon, { borderColor: unlocked ? mod.color + "55" : C.cardBorder }]}>
-                  <Feather
-                    name={mod.icon as any}
-                    size={16}
-                    color={unlocked ? mod.color : C.textTertiary}
-                  />
+              <View key={cat.id} style={styles.categoryBlock}>
+                <View style={styles.categoryHeader}>
+                  <View style={[styles.categoryDot, { backgroundColor: cat.color }]} />
+                  <Text style={styles.categoryTitle}>{cat.label}</Text>
+                  <Text style={[styles.categoryPct, { color: cat.color }]}>{catPct}%</Text>
                 </View>
-                <View style={styles.modContent}>
-                  <View style={styles.modHeader}>
-                    <Text style={[styles.modTitle, !unlocked && { color: C.textTertiary }]}>
-                      {mod.title}
-                    </Text>
-                    <Text style={[styles.modPct, { color: unlocked ? mod.color : C.textTertiary }]}>
-                      {completedCount}/{mod.lessons.length}
-                    </Text>
-                  </View>
-                  <View style={styles.modTrack}>
-                    <Animated.View
-                      style={[
-                        styles.modFill,
-                        {
-                          width: `${Math.round(pct * 100)}%`,
-                          backgroundColor: unlocked ? mod.color : C.textTertiary,
-                        },
-                      ]}
-                    />
-                  </View>
-                </View>
+                {catMods.map((mod) => {
+                  const unlocked = isModuleUnlocked(mod.id);
+                  const completedCount = mod.lessons.filter((l) => isLessonCompleted(l.id)).length;
+                  const pct = mod.lessons.length > 0 ? completedCount / mod.lessons.length : 0;
+                  return (
+                    <View key={mod.id} style={styles.moduleProgressCard}>
+                      <View style={[styles.modIcon, { borderColor: unlocked ? mod.color + "55" : C.cardBorder }]}>
+                        <Feather
+                          name={mod.icon as any}
+                          size={16}
+                          color={unlocked ? mod.color : C.textTertiary}
+                        />
+                      </View>
+                      <View style={styles.modContent}>
+                        <View style={styles.modHeader}>
+                          <Text style={[styles.modTitle, !unlocked && { color: C.textTertiary }]}>
+                            {mod.title}
+                          </Text>
+                          <Text style={[styles.modPct, { color: unlocked ? mod.color : C.textTertiary }]}>
+                            {completedCount}/{mod.lessons.length}
+                          </Text>
+                        </View>
+                        <View style={styles.modTrack}>
+                          <Animated.View
+                            style={[
+                              styles.modFill,
+                              {
+                                width: `${Math.round(pct * 100)}%`,
+                                backgroundColor: unlocked ? mod.color : C.textTertiary,
+                              },
+                            ]}
+                          />
+                        </View>
+                      </View>
+                    </View>
+                  );
+                })}
               </View>
             );
           })}
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(150)}>
-          <Text style={styles.sectionTitle}>Achievements</Text>
+          <Text style={styles.sectionTitle}>Достижения</Text>
           {ACHIEVEMENTS.map((ach) => (
             <AchievementCard key={ach.id} achId={ach.id} />
           ))}
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(200)}>
-          <Text style={styles.sectionTitle}>Stats</Text>
+          <Text style={styles.sectionTitle}>Статистика</Text>
           <View style={styles.statsGrid}>
             <View style={styles.statBox}>
               <Text style={[styles.statVal, { color: C.tint }]}>{totalCompleted}</Text>
-              <Text style={styles.statLbl}>Lessons Done</Text>
+              <Text style={styles.statLbl}>Уроков пройдено</Text>
             </View>
             <View style={styles.statBox}>
               <Text style={[styles.statVal, { color: C.success }]}>{totalQuizzesPerfect}</Text>
-              <Text style={styles.statLbl}>Perfect Quizzes</Text>
+              <Text style={styles.statLbl}>Идеальных квизов</Text>
             </View>
             <View style={styles.statBox}>
               <Text style={[styles.statVal, { color: C.warning }]}>{streak}</Text>
-              <Text style={styles.statLbl}>Day Streak</Text>
+              <Text style={styles.statLbl}>Серия дней</Text>
             </View>
             <View style={styles.statBox}>
               <Text style={[styles.statVal, { color: C.accent }]}>{Math.round(overallPct * 100)}%</Text>
-              <Text style={styles.statLbl}>Complete</Text>
+              <Text style={styles.statLbl}>Пройдено</Text>
             </View>
           </View>
         </Animated.View>
@@ -307,6 +358,30 @@ const styles = StyleSheet.create({
     color: C.text,
     marginBottom: 14,
     marginTop: 8,
+  },
+  categoryBlock: {
+    marginBottom: 20,
+  },
+  categoryHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 10,
+  },
+  categoryDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  categoryTitle: {
+    flex: 1,
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 15,
+    color: C.text,
+  },
+  categoryPct: {
+    fontFamily: "Inter_700Bold",
+    fontSize: 14,
   },
   moduleProgressCard: {
     flexDirection: "row",
