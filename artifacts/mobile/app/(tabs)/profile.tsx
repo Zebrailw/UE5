@@ -23,7 +23,7 @@ import { MODULES } from "@/data/curriculum";
 
 const C = Colors.dark;
 
-const BOOSTY_URL = "https://boosty.to/zebradf";
+const BOOSTY_URL = "https://boosty.to/ue5bluprintsacademy";
 
 const DONATION_TIERS = [
   {
