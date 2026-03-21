@@ -50,13 +50,18 @@ artifacts-monorepo/
 - Search and filter by difficulty
 - Dark theme styled after Unreal Engine 5
 - Local persistence via AsyncStorage
+- **120+ Blueprint mechanics** across 11 categories (new)
+- **Visual node connection practice** — interactive Blueprint editor (new)
+- **Donation system** — Boosty integration with tiered modal (new)
+- **Google Play ready** — adaptive icon, versionCode, permissions (new)
 
 ### App Screens
 - **Home** — XP bar, stats, continue learning card, module overview
 - **Learn** — Full curriculum with search, filter, lesson list
-- **Examples** — Real-world Blueprint recipes with expandable steps
+- **Mechanics** — 120+ mechanics with search, category filter, detail view (NEW)
+- **Practice** — Visual Blueprint node connection editor with 12+ challenges (NEW)
 - **Progress** — Module progress bars, achievements, stats grid
-- **Profile** — User rank, favorites, review later, settings
+- **Profile** — User rank, favorites, review later, donation modal, settings
 - **Lesson** — Theory content, practice tab, complete & quiz actions
 - **Quiz** — Multiple choice with instant feedback and result review
 
@@ -73,11 +78,24 @@ artifacts-monorepo/
 
 ### Key Files
 - `artifacts/mobile/data/curriculum.ts` — All lesson content, quizzes, examples, achievements
+- `artifacts/mobile/data/mechanics.ts` — 120+ Blueprint mechanics across 11 categories
+- `artifacts/mobile/data/blueprintChallenges.ts` — 12+ visual node connection challenges
 - `artifacts/mobile/context/ProgressContext.tsx` — XP, progress, and state management
 - `artifacts/mobile/app/(tabs)/` — Main tab screens
+- `artifacts/mobile/app/(tabs)/mechanics.tsx` — Mechanics browser with search/filter
+- `artifacts/mobile/app/(tabs)/practice.tsx` — Visual Blueprint practice screen
 - `artifacts/mobile/app/lesson/[id].tsx` — Lesson viewer
 - `artifacts/mobile/app/quiz/[id].tsx` — Quiz engine
+- `artifacts/mobile/components/BlueprintBuilder.tsx` — Interactive node graph editor
 - `artifacts/mobile/constants/colors.ts` — Dark UE5 color theme
+
+### Monetization Notes
+- Donation system: Boosty via Linking.openURL, tiered modal (☕/$1, 🍕/$5, ⚡/$15)
+- For Google Ads (AdMob): requires EAS custom build + AdMob account
+  1. `pnpm add react-native-google-mobile-ads`
+  2. Add AdMob App ID to `app.json` under `plugins`
+  3. Use test ad IDs during development
+  4. Build with `eas build --platform android`
 
 ## API Server
 

@@ -1,271 +1,310 @@
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
-  TextInput,
   TouchableOpacity,
   Platform,
-  KeyboardAvoidingView,
-  Animated,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import * as Haptics from "expo-haptics";
 
 import Colors from "@/constants/colors";
-import {
-  PracticeChallenge,
-  DIFFICULTY_COLORS,
-  getRandomChallenge,
-  checkAnswer,
-} from "@/data/practice";
+import BlueprintBuilder from "@/components/BlueprintBuilder";
+import { BLUEPRINT_CHALLENGES, BlueprintChallenge, getRandomChallenge } from "@/data/blueprintChallenges";
+import { BuildConnection } from "@/data/curriculum";
 
 const C = Colors.dark;
 
-type Stage = "task" | "answering" | "result";
+const DIFFICULTY_COLORS: Record<string, string> = {
+  Beginner: "#00D4FF",
+  Basic: "#39D353",
+  Intermediate: "#FFB800",
+  Advanced: "#FF6B35",
+  Expert: "#FF4757",
+};
+
+type Stage = "intro" | "building" | "result";
 
 export default function PracticeScreen() {
   const insets = useSafeAreaInsets();
   const isWeb = Platform.OS === "web";
+  const tabBarHeight = isWeb ? 84 : insets.bottom + 50;
 
-  const [challenge, setChallenge] = useState<PracticeChallenge>(() => getRandomChallenge());
-  const [answer, setAnswer] = useState("");
-  const [stage, setStage] = useState<Stage>("task");
+  const [challenge, setChallenge] = useState<BlueprintChallenge>(() => getRandomChallenge());
+  const [stage, setStage] = useState<Stage>("intro");
   const [isCorrect, setIsCorrect] = useState(false);
-  const [showHint, setShowHint] = useState(false);
+  const [userConnections, setUserConnections] = useState<BuildConnection[]>([]);
   const [streak, setStreak] = useState(0);
   const [totalSolved, setTotalSolved] = useState(0);
+  const [xpEarned, setXpEarned] = useState(0);
 
-  const shakeAnim = useRef(new Animated.Value(0)).current;
-  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const handleStart = useCallback(() => {
+    setStage("building");
+    setUserConnections([]);
+  }, []);
 
-  const shake = useCallback(() => {
-    Animated.sequence([
-      Animated.timing(shakeAnim, { toValue: 10, duration: 60, useNativeDriver: true }),
-      Animated.timing(shakeAnim, { toValue: -10, duration: 60, useNativeDriver: true }),
-      Animated.timing(shakeAnim, { toValue: 8, duration: 60, useNativeDriver: true }),
-      Animated.timing(shakeAnim, { toValue: -8, duration: 60, useNativeDriver: true }),
-      Animated.timing(shakeAnim, { toValue: 0, duration: 60, useNativeDriver: true }),
-    ]).start();
-  }, [shakeAnim]);
-
-  const pulse = useCallback(() => {
-    Animated.sequence([
-      Animated.timing(pulseAnim, { toValue: 1.05, duration: 150, useNativeDriver: true }),
-      Animated.timing(pulseAnim, { toValue: 1, duration: 150, useNativeDriver: true }),
-    ]).start();
-  }, [pulseAnim]);
-
-  const handleSubmit = useCallback(() => {
-    if (!answer.trim()) return;
-    const correct = checkAnswer(challenge, answer);
-    setIsCorrect(correct);
-    setStage("result");
-    if (correct) {
-      setStreak((s) => s + 1);
-      setTotalSolved((t) => t + 1);
-      pulse();
-    } else {
-      setStreak(0);
-      shake();
-    }
-  }, [answer, challenge, pulse, shake]);
+  const handleCheck = useCallback(
+    (connections: BuildConnection[]) => {
+      setUserConnections(connections);
+      const solution = challenge.buildChallenge.solution;
+      const correct =
+        connections.length === solution.length &&
+        solution.every((sol) =>
+          connections.some(
+            (c) =>
+              c.fromNodeId === sol.fromNodeId &&
+              c.fromPinId === sol.fromPinId &&
+              c.toNodeId === sol.toNodeId &&
+              c.toPinId === sol.toPinId
+          )
+        );
+      setIsCorrect(correct);
+      setStage("result");
+      if (correct) {
+        setStreak((s) => s + 1);
+        setTotalSolved((t) => t + 1);
+        setXpEarned((x) => x + challenge.xpReward);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      } else {
+        setStreak(0);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      }
+    },
+    [challenge]
+  );
 
   const handleNext = useCallback(() => {
     const next = getRandomChallenge(challenge.id);
     setChallenge(next);
-    setAnswer("");
-    setStage("task");
-    setShowHint(false);
+    setStage("intro");
+    setUserConnections([]);
+    setIsCorrect(false);
   }, [challenge.id]);
 
-  const handleSkip = useCallback(() => {
-    setStreak(0);
-    handleNext();
-  }, [handleNext]);
+  const handleRetry = useCallback(() => {
+    setStage("building");
+    setUserConnections([]);
+    setIsCorrect(false);
+  }, []);
 
-  const diffColor = DIFFICULTY_COLORS[challenge.difficulty];
-  const tabBarHeight = isWeb ? 84 : insets.bottom + 50;
+  const diffColor = DIFFICULTY_COLORS[challenge.difficulty] || C.tint;
 
   return (
-    <KeyboardAvoidingView
-      style={styles.root}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={0}
-    >
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={[
-          styles.container,
-          { paddingTop: isWeb ? 67 : insets.top + 12, paddingBottom: tabBarHeight + 16 },
-        ]}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Header */}
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.headerTitle}>Практика</Text>
-            <Text style={styles.headerSub}>Blueprint-задания</Text>
-          </View>
-          <View style={styles.statsRow}>
-            {streak > 1 && (
-              <View style={styles.streakBadge}>
-                <Text style={styles.streakText}>🔥 {streak}</Text>
+    <View style={styles.root}>
+      {stage !== "building" && (
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={[
+            styles.container,
+            {
+              paddingTop: isWeb ? 67 : insets.top + 12,
+              paddingBottom: tabBarHeight + 20,
+            },
+          ]}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Header */}
+          <View style={styles.header}>
+            <View>
+              <Text style={styles.headerTitle}>Практика</Text>
+              <Text style={styles.headerSub}>Соединяй ноды как в Unreal</Text>
+            </View>
+            <View style={styles.statsRow}>
+              {streak > 1 && (
+                <View style={styles.streakBadge}>
+                  <Text style={styles.streakText}>🔥 {streak}</Text>
+                </View>
+              )}
+              <View style={styles.solvedBadge}>
+                <Feather name="check-circle" size={13} color={C.success} />
+                <Text style={styles.solvedText}>{totalSolved}</Text>
               </View>
-            )}
-            <View style={styles.solvedBadge}>
-              <Feather name="check-circle" size={13} color={C.success} />
-              <Text style={styles.solvedText}>{totalSolved}</Text>
+              {xpEarned > 0 && (
+                <View style={styles.xpBadge}>
+                  <Text style={styles.xpText}>+{xpEarned} XP</Text>
+                </View>
+              )}
             </View>
           </View>
-        </View>
 
-        {/* Challenge Card */}
-        <Animated.View style={{ transform: [{ translateX: shakeAnim }, { scale: pulseAnim }] }}>
-          <LinearGradient
-            colors={["#141C28", "#0F1620"]}
-            style={styles.card}
-          >
-            {/* Category + Difficulty */}
+          {/* Challenge Card */}
+          <LinearGradient colors={["#141C28", "#0F1620"]} style={styles.card}>
             <View style={styles.cardMeta}>
               <View style={styles.categoryTag}>
                 <Text style={styles.categoryText}>{challenge.category}</Text>
               </View>
-              <View style={[styles.difficultyTag, { borderColor: diffColor }]}>
-                <Text style={[styles.difficultyText, { color: diffColor }]}>
-                  {challenge.difficulty}
-                </Text>
+              <View style={[styles.difficultyTag, { borderColor: diffColor + "80", backgroundColor: diffColor + "15" }]}>
+                <Text style={[styles.difficultyText, { color: diffColor }]}>{challenge.difficulty}</Text>
+              </View>
+              <View style={styles.xpTag}>
+                <Text style={styles.xpTagText}>+{challenge.xpReward} XP</Text>
               </View>
             </View>
 
-            {/* Title */}
             <Text style={styles.challengeTitle}>{challenge.title}</Text>
-
-            {/* Description */}
             <Text style={styles.challengeDesc}>{challenge.description}</Text>
 
-            {/* Divider */}
             <View style={styles.divider} />
 
-            {/* Task */}
-            <View style={styles.taskBox}>
-              <Feather name="terminal" size={14} color={C.tint} style={{ marginRight: 6 }} />
-              <Text style={styles.taskText}>{challenge.task}</Text>
+            <View style={styles.instructionBox}>
+              <Feather name="git-merge" size={14} color={C.tint} style={{ marginRight: 6, marginTop: 1 }} />
+              <Text style={styles.instructionText}>{challenge.buildChallenge.instruction}</Text>
             </View>
           </LinearGradient>
-        </Animated.View>
 
-        {/* Hint */}
-        {stage !== "result" && (
-          <TouchableOpacity
-            style={styles.hintToggle}
-            onPress={() => setShowHint((h) => !h)}
-            activeOpacity={0.7}
-          >
-            <Feather name="help-circle" size={15} color={C.warning} />
-            <Text style={styles.hintToggleText}>{showHint ? "Скрыть подсказку" : "Показать подсказку"}</Text>
-          </TouchableOpacity>
-        )}
-        {showHint && stage !== "result" && (
-          <View style={styles.hintBox}>
-            <Text style={styles.hintLabel}>Подсказка</Text>
-            <Text style={styles.hintText}>{challenge.hint}</Text>
+          {/* Node Preview */}
+          <View style={styles.previewSection}>
+            <Text style={styles.previewLabel}>НОДЫ ДЛЯ СОЕДИНЕНИЯ</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.previewScroll}>
+              <View style={styles.previewRow}>
+                {challenge.buildChallenge.nodes.map((node, idx) => {
+                  const nodeColors: Record<string, string> = {
+                    event: "#B71C1C",
+                    function: "#1565C0",
+                    flow: "#4A148C",
+                    value: "#1B5E20",
+                    variable: "#E65100",
+                  };
+                  const nc = nodeColors[node.nodeType] || "#333";
+                  return (
+                    <React.Fragment key={node.id}>
+                      <View style={[styles.previewNode, { borderColor: nc + "80" }]}>
+                        <View style={[styles.previewNodeHeader, { backgroundColor: nc }]}>
+                          <Text style={styles.previewNodeTitle} numberOfLines={1}>{node.title}</Text>
+                        </View>
+                        <View style={styles.previewNodeBody}>
+                          {node.outputs.map((pin) => (
+                            <Text key={pin.id} style={styles.previewPin}>▷ {pin.label}</Text>
+                          ))}
+                        </View>
+                      </View>
+                      {idx < challenge.buildChallenge.nodes.length - 1 && (
+                        <View style={styles.previewArrow}>
+                          <Feather name="arrow-right" size={16} color={C.textTertiary} />
+                        </View>
+                      )}
+                    </React.Fragment>
+                  );
+                })}
+              </View>
+            </ScrollView>
           </View>
-        )}
 
-        {/* Answer Input */}
-        {stage !== "result" && (
-          <View style={styles.inputSection}>
-            <Text style={styles.inputLabel}>Твой ответ</Text>
-            <TextInput
-              style={styles.input}
-              value={answer}
-              onChangeText={setAnswer}
-              placeholder={challenge.placeholder}
-              placeholderTextColor={C.textTertiary}
-              multiline
-              numberOfLines={4}
-              textAlignVertical="top"
-              autoCorrect={false}
-              autoCapitalize="none"
-            />
-            <View style={styles.inputActions}>
-              <TouchableOpacity style={styles.skipBtn} onPress={handleSkip} activeOpacity={0.8}>
-                <Feather name="skip-forward" size={15} color={C.textSecondary} />
-                <Text style={styles.skipText}>Пропустить</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.submitBtn, !answer.trim() && styles.submitBtnDisabled]}
-                onPress={handleSubmit}
-                activeOpacity={0.85}
-                disabled={!answer.trim()}
-              >
-                <LinearGradient
-                  colors={answer.trim() ? ["#00D4FF", "#0099CC"] : ["#1E2D42", "#1E2D42"]}
-                  style={styles.submitGrad}
-                >
-                  <Text style={[styles.submitText, !answer.trim() && { color: C.textTertiary }]}>
-                    Проверить
-                  </Text>
-                  <Feather name="arrow-right" size={16} color={answer.trim() ? "#0A0E14" : C.textTertiary} />
-                </LinearGradient>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
-
-        {/* Result */}
-        {stage === "result" && (
-          <View style={styles.resultSection}>
+          {/* Result */}
+          {stage === "result" && (
             <LinearGradient
-              colors={isCorrect ? ["rgba(57,211,83,0.12)", "rgba(57,211,83,0.04)"] : ["rgba(255,71,87,0.12)", "rgba(255,71,87,0.04)"]}
+              colors={
+                isCorrect
+                  ? ["rgba(57,211,83,0.12)", "rgba(57,211,83,0.04)"]
+                  : ["rgba(255,71,87,0.12)", "rgba(255,71,87,0.04)"]
+              }
               style={[styles.resultCard, { borderColor: isCorrect ? C.success : C.error }]}
             >
               <View style={styles.resultHeader}>
-                <View style={[styles.resultIcon, { backgroundColor: isCorrect ? "rgba(57,211,83,0.2)" : "rgba(255,71,87,0.2)" }]}>
-                  <Feather name={isCorrect ? "check" : "x"} size={22} color={isCorrect ? C.success : C.error} />
+                <View
+                  style={[
+                    styles.resultIcon,
+                    { backgroundColor: isCorrect ? "rgba(57,211,83,0.2)" : "rgba(255,71,87,0.2)" },
+                  ]}
+                >
+                  <Feather
+                    name={isCorrect ? "check" : "x"}
+                    size={24}
+                    color={isCorrect ? C.success : C.error}
+                  />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.resultTitle, { color: isCorrect ? C.success : C.error }]}>
-                    {isCorrect ? "Правильно!" : "Не совсем..."}
+                    {isCorrect ? "Правильно! Ноды соединены!" : "Не совсем верно..."}
                   </Text>
                   <Text style={styles.resultSub}>
-                    {isCorrect ? "Отличная работа с нодами!" : "Посмотри пример решения ниже"}
+                    {isCorrect
+                      ? `Получено +${challenge.xpReward} XP за Blueprint задание`
+                      : "Проверь направление соединений"}
                   </Text>
                 </View>
               </View>
 
               <View style={styles.divider} />
 
-              <Text style={styles.explanationLabel}>Объяснение</Text>
-              <Text style={styles.explanationText}>{challenge.explanation}</Text>
-
-              <View style={styles.exampleBox}>
-                <Text style={styles.exampleLabel}>Пример решения</Text>
-                <Text style={styles.exampleCode}>{challenge.exampleSolution}</Text>
-              </View>
-
-              {!isCorrect && (
-                <View style={styles.yourAnswerBox}>
-                  <Text style={styles.yourAnswerLabel}>Твой ответ</Text>
-                  <Text style={styles.yourAnswerText}>{answer}</Text>
+              <Text style={styles.solutionLabel}>ПРАВИЛЬНОЕ РЕШЕНИЕ</Text>
+              {challenge.buildChallenge.solution.map((conn, idx) => (
+                <View key={idx} style={styles.connRow}>
+                  <View style={styles.connBadge}>
+                    <Text style={styles.connBadgeText}>{conn.fromNodeId}</Text>
+                  </View>
+                  <Feather name="arrow-right" size={12} color={C.tint} />
+                  <View style={styles.connBadge}>
+                    <Text style={styles.connBadgeText}>{conn.toNodeId}</Text>
+                  </View>
+                  <Text style={styles.connPins}>
+                    ({conn.fromPinId} → {conn.toPinId})
+                  </Text>
                 </View>
-              )}
-            </LinearGradient>
+              ))}
 
-            <TouchableOpacity style={styles.nextBtn} onPress={handleNext} activeOpacity={0.85}>
-              <LinearGradient colors={["#00D4FF", "#0099CC"]} style={styles.nextGrad}>
-                <Text style={styles.nextText}>Следующее задание</Text>
-                <Feather name="arrow-right" size={18} color="#0A0E14" />
-              </LinearGradient>
+              <View style={styles.resultActions}>
+                {!isCorrect && (
+                  <TouchableOpacity style={styles.retryBtn} onPress={handleRetry} activeOpacity={0.8}>
+                    <Feather name="refresh-ccw" size={15} color={C.tint} />
+                    <Text style={styles.retryText}>Попробовать снова</Text>
+                  </TouchableOpacity>
+                )}
+                <TouchableOpacity style={styles.nextBtn} onPress={handleNext} activeOpacity={0.85}>
+                  <LinearGradient colors={["#00D4FF", "#0099CC"]} style={styles.nextGrad}>
+                    <Text style={styles.nextText}>Следующее задание</Text>
+                    <Feather name="arrow-right" size={18} color="#0A0E14" />
+                  </LinearGradient>
+                </TouchableOpacity>
+              </View>
+            </LinearGradient>
+          )}
+
+          {/* Start Button */}
+          {stage === "intro" && (
+            <View style={styles.startSection}>
+              <View style={styles.hintBox}>
+                <Feather name="info" size={14} color={C.warning} />
+                <Text style={styles.hintText}>{challenge.buildChallenge.hint}</Text>
+              </View>
+              <TouchableOpacity onPress={handleStart} activeOpacity={0.85} style={styles.startBtn}>
+                <LinearGradient colors={["#00D4FF", "#0099CC"]} style={styles.startGrad}>
+                  <Feather name="git-merge" size={18} color="#0A0E14" />
+                  <Text style={styles.startText}>Открыть Blueprint редактор</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={handleNext} style={styles.skipBtn}>
+                <Feather name="skip-forward" size={14} color={C.textSecondary} />
+                <Text style={styles.skipText}>Пропустить задание</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </ScrollView>
+      )}
+
+      {/* Blueprint Builder */}
+      {stage === "building" && (
+        <View style={[styles.builderWrap, { paddingTop: isWeb ? 67 : insets.top, paddingBottom: tabBarHeight }]}>
+          <View style={styles.builderHeader}>
+            <TouchableOpacity onPress={() => setStage("intro")} style={styles.backBtn}>
+              <Feather name="arrow-left" size={18} color={C.tint} />
             </TouchableOpacity>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.builderTitle}>{challenge.title}</Text>
+              <Text style={styles.builderSubtitle}>{challenge.buildChallenge.instruction}</Text>
+            </View>
           </View>
-        )}
-      </ScrollView>
-    </KeyboardAvoidingView>
+          <BlueprintBuilder
+            challenge={challenge.buildChallenge}
+            onComplete={handleCheck}
+          />
+        </View>
+      )}
+    </View>
   );
 }
 
@@ -300,19 +339,19 @@ const styles = StyleSheet.create({
   },
   statsRow: {
     flexDirection: "row",
-    gap: 8,
+    gap: 6,
     alignItems: "center",
   },
   streakBadge: {
     backgroundColor: "rgba(255,107,53,0.15)",
     borderRadius: 20,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
     borderWidth: 1,
     borderColor: "rgba(255,107,53,0.3)",
   },
   streakText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: "700",
     color: "#FF6B35",
   },
@@ -322,15 +361,28 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "rgba(57,211,83,0.1)",
     borderRadius: 20,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
     borderWidth: 1,
     borderColor: "rgba(57,211,83,0.25)",
   },
   solvedText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: "700",
     color: C.success,
+  },
+  xpBadge: {
+    backgroundColor: "rgba(255,184,0,0.1)",
+    borderRadius: 20,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderWidth: 1,
+    borderColor: "rgba(255,184,0,0.3)",
+  },
+  xpText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: C.warning,
   },
   card: {
     borderRadius: 16,
@@ -341,29 +393,43 @@ const styles = StyleSheet.create({
   },
   cardMeta: {
     flexDirection: "row",
-    gap: 8,
+    gap: 7,
+    flexWrap: "wrap",
   },
   categoryTag: {
     backgroundColor: "rgba(0,212,255,0.1)",
     borderRadius: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingHorizontal: 9,
+    paddingVertical: 3,
     borderWidth: 1,
     borderColor: "rgba(0,212,255,0.2)",
   },
   categoryText: {
-    fontSize: 12,
+    fontSize: 11,
     color: C.tint,
     fontWeight: "600",
   },
   difficultyTag: {
     borderRadius: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingHorizontal: 9,
+    paddingVertical: 3,
     borderWidth: 1,
   },
   difficultyText: {
-    fontSize: 12,
+    fontSize: 11,
+    fontWeight: "600",
+  },
+  xpTag: {
+    backgroundColor: "rgba(255,184,0,0.1)",
+    borderRadius: 6,
+    paddingHorizontal: 9,
+    paddingVertical: 3,
+    borderWidth: 1,
+    borderColor: "rgba(255,184,0,0.25)",
+  },
+  xpTagText: {
+    fontSize: 11,
+    color: C.warning,
     fontWeight: "600",
   },
   challengeTitle: {
@@ -381,7 +447,7 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: C.cardBorder,
   },
-  taskBox: {
+  instructionBox: {
     flexDirection: "row",
     alignItems: "flex-start",
     backgroundColor: "rgba(0,212,255,0.06)",
@@ -390,115 +456,113 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(0,212,255,0.15)",
   },
-  taskText: {
+  instructionText: {
     flex: 1,
     fontSize: 13,
     color: C.text,
     lineHeight: 19,
   },
-  hintToggle: {
+  previewSection: {
+    gap: 8,
+  },
+  previewLabel: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: C.textTertiary,
+    letterSpacing: 0.8,
+  },
+  previewScroll: {
+    flexGrow: 0,
+  },
+  previewRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    alignSelf: "flex-start",
+    gap: 0,
     paddingVertical: 4,
   },
-  hintToggleText: {
-    fontSize: 13,
-    color: C.warning,
-    fontWeight: "500",
+  previewNode: {
+    borderRadius: 8,
+    borderWidth: 1.5,
+    overflow: "hidden",
+    minWidth: 90,
+    maxWidth: 130,
+  },
+  previewNodeHeader: {
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+  },
+  previewNodeTitle: {
+    fontSize: 10,
+    color: "#FFF",
+    fontWeight: "700",
+    fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
+  },
+  previewNodeBody: {
+    backgroundColor: "#111820",
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    gap: 2,
+  },
+  previewPin: {
+    fontSize: 9,
+    color: C.textSecondary,
+    fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
+  },
+  previewArrow: {
+    width: 28,
+    alignItems: "center",
   },
   hintBox: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 8,
     backgroundColor: "rgba(255,184,0,0.08)",
     borderRadius: 12,
     padding: 14,
     borderWidth: 1,
     borderColor: "rgba(255,184,0,0.2)",
-    gap: 6,
-  },
-  hintLabel: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: C.warning,
-    letterSpacing: 0.5,
-    textTransform: "uppercase",
   },
   hintText: {
+    flex: 1,
     fontSize: 13,
     color: C.text,
     lineHeight: 19,
-    fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
   },
-  inputSection: {
+  startSection: {
     gap: 10,
   },
-  inputLabel: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: C.textSecondary,
-    letterSpacing: 0.3,
+  startBtn: {
+    borderRadius: 14,
+    overflow: "hidden",
   },
-  input: {
-    backgroundColor: C.backgroundSecondary,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: C.cardBorder,
-    padding: 14,
-    color: C.text,
-    fontSize: 14,
-    minHeight: 110,
-    fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
-    lineHeight: 20,
-  },
-  inputActions: {
+  startGrad: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
+    justifyContent: "center",
     gap: 10,
+    paddingVertical: 16,
+  },
+  startText: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#0A0E14",
   },
   skipBtn: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
     gap: 6,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: C.cardBorder,
-    backgroundColor: C.backgroundSecondary,
+    paddingVertical: 10,
   },
   skipText: {
-    fontSize: 14,
+    fontSize: 13,
     color: C.textSecondary,
-    fontWeight: "500",
-  },
-  submitBtn: {
-    flex: 1,
-    borderRadius: 12,
-    overflow: "hidden",
-  },
-  submitBtnDisabled: {},
-  submitGrad: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-  },
-  submitText: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: "#0A0E14",
-  },
-  resultSection: {
-    gap: 14,
   },
   resultCard: {
     borderRadius: 16,
     padding: 18,
     borderWidth: 1,
-    gap: 14,
+    gap: 12,
   },
   resultHeader: {
     flexDirection: "row",
@@ -513,67 +577,64 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   resultTitle: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: "700",
   },
   resultSub: {
-    fontSize: 13,
+    fontSize: 12,
     color: C.textSecondary,
     marginTop: 2,
   },
-  explanationLabel: {
-    fontSize: 11,
+  solutionLabel: {
+    fontSize: 10,
     fontWeight: "700",
-    color: C.textSecondary,
-    letterSpacing: 0.5,
-    textTransform: "uppercase",
+    color: C.textTertiary,
+    letterSpacing: 0.6,
   },
-  explanationText: {
-    fontSize: 13,
-    color: C.text,
-    lineHeight: 20,
-  },
-  exampleBox: {
-    backgroundColor: "rgba(0,0,0,0.3)",
-    borderRadius: 10,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: C.cardBorder,
+  connRow: {
+    flexDirection: "row",
+    alignItems: "center",
     gap: 6,
+    flexWrap: "wrap",
   },
-  exampleLabel: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: C.tint,
-    letterSpacing: 0.5,
-    textTransform: "uppercase",
-  },
-  exampleCode: {
-    fontSize: 13,
-    color: C.tint,
-    fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
-    lineHeight: 19,
-  },
-  yourAnswerBox: {
-    backgroundColor: "rgba(255,71,87,0.06)",
-    borderRadius: 10,
-    padding: 12,
+  connBadge: {
+    backgroundColor: "rgba(0,212,255,0.1)",
+    borderRadius: 5,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
     borderWidth: 1,
-    borderColor: "rgba(255,71,87,0.2)",
-    gap: 6,
+    borderColor: "rgba(0,212,255,0.2)",
   },
-  yourAnswerLabel: {
+  connBadgeText: {
     fontSize: 11,
-    fontWeight: "700",
-    color: "#FF4757",
-    letterSpacing: 0.5,
-    textTransform: "uppercase",
-  },
-  yourAnswerText: {
-    fontSize: 13,
-    color: C.textSecondary,
+    color: C.tint,
+    fontWeight: "600",
     fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
-    lineHeight: 19,
+  },
+  connPins: {
+    fontSize: 10,
+    color: C.textTertiary,
+    fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
+  },
+  resultActions: {
+    gap: 8,
+    marginTop: 4,
+  },
+  retryBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: C.tint + "40",
+    backgroundColor: C.tint + "10",
+  },
+  retryText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: C.tint,
   },
   nextBtn: {
     borderRadius: 14,
@@ -584,11 +645,39 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 10,
-    paddingVertical: 16,
+    paddingVertical: 14,
   },
   nextText: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "700",
     color: "#0A0E14",
+  },
+  builderWrap: {
+    flex: 1,
+    backgroundColor: C.background,
+  },
+  builderHeader: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: C.cardBorder,
+  },
+  backBtn: {
+    padding: 4,
+    marginTop: 2,
+  },
+  builderTitle: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: C.text,
+  },
+  builderSubtitle: {
+    fontSize: 12,
+    color: C.textSecondary,
+    marginTop: 2,
+    lineHeight: 17,
   },
 });

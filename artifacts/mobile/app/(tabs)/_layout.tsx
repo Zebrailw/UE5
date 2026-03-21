@@ -31,6 +31,10 @@ function NativeTabLayout() {
         <Icon sf={{ default: "lightbulb", selected: "lightbulb.fill" }} />
         <Label>Примеры</Label>
       </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="mechanics">
+        <Icon sf={{ default: "wrench.and.screwdriver", selected: "wrench.and.screwdriver.fill" }} />
+        <Label>Механики</Label>
+      </NativeTabs.Trigger>
       <NativeTabs.Trigger name="practice">
         <Icon sf={{ default: "pencil.and.list.clipboard", selected: "pencil.and.list.clipboard" }} />
         <Label>Практика</Label>
@@ -125,6 +129,18 @@ function ClassicTabLayout() {
               <SymbolView name="lightbulb.fill" tintColor={color} size={22} />
             ) : (
               <Feather name="layers" size={22} color={color} />
+            ),
+        }}
+      />
+      <Tabs.Screen
+        name="mechanics"
+        options={{
+          title: "Механики",
+          tabBarIcon: ({ color }) =>
+            isIOS ? (
+              <SymbolView name="wrench.and.screwdriver.fill" tintColor={color} size={22} />
+            ) : (
+              <Feather name="tool" size={22} color={color} />
             ),
         }}
       />

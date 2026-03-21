@@ -230,12 +230,13 @@ function NodeCard({ node, selectedPin, connections, onPinPress }: NodeCardProps)
 
 interface Props {
   challenge: BuildChallenge;
-  modColor: string;
+  modColor?: string;
+  onComplete?: (connections: BuildConnection[]) => void;
 }
 
 type CheckState = "idle" | "success" | "fail";
 
-export default function BlueprintBuilder({ challenge, modColor }: Props) {
+export default function BlueprintBuilder({ challenge, modColor = C.tint, onComplete }: Props) {
   const [connections, setConnections] = useState<BuildConnection[]>([]);
   const [selectedPin, setSelectedPin] = useState<string | null>(null);
   const [checkState, setCheckState] = useState<CheckState>("idle");
@@ -339,9 +340,11 @@ export default function BlueprintBuilder({ challenge, modColor }: Props) {
     if (allCorrect && connections.length >= solution.length) {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setCheckState("success");
+      onComplete?.(connections);
     } else {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       setCheckState("fail");
+      onComplete?.(connections);
     }
   };
 
