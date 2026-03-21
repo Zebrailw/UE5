@@ -1,11 +1,10 @@
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import React, { useState } from "react";
+import React from "react";
 import {
   Alert,
   Linking,
-  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -22,6 +21,8 @@ import { useProgress } from "@/context/ProgressContext";
 import { MODULES } from "@/data/curriculum";
 
 const C = Colors.dark;
+
+const BUILDS_URL = "https://expo.dev/accounts/zebradf/projects/mobile/builds";
 
 function SettingRow({
   icon,
@@ -51,91 +52,12 @@ function SettingRow({
   );
 }
 
-function BuildModal({ visible, onClose }: { visible: boolean; onClose: () => void }) {
-  const steps = [
-    {
-      num: "1",
-      title: "Установите EAS CLI",
-      code: "npm install -g eas-cli",
-      desc: "Инструмент сборки Expo",
-    },
-    {
-      num: "2",
-      title: "Войдите в аккаунт Expo",
-      code: "eas login",
-      desc: "Нужен аккаунт на expo.dev",
-    },
-    {
-      num: "3",
-      title: "Запустите сборку APK",
-      code: "eas build -p android --profile preview",
-      desc: "Сборка займёт 5–15 минут",
-    },
-    {
-      num: "4",
-      title: "Скачайте APK",
-      desc: "Ссылка придёт на email или откройте expo.dev/accounts/[ваш-аккаунт]/projects",
-      code: null,
-    },
-  ];
-
-  return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalSheet}>
-          <View style={styles.modalHandle} />
-
-          <View style={styles.modalHeader}>
-            <View style={styles.modalIconCircle}>
-              <Feather name="package" size={26} color={C.tint} />
-            </View>
-            <Text style={styles.modalTitle}>Сборка APK</Text>
-            <Text style={styles.modalSubtitle}>
-              Инструкция по сборке Android-приложения через EAS Build
-            </Text>
-          </View>
-
-          {steps.map((step) => (
-            <View key={step.num} style={styles.stepRow}>
-              <View style={styles.stepNum}>
-                <Text style={styles.stepNumText}>{step.num}</Text>
-              </View>
-              <View style={styles.stepContent}>
-                <Text style={styles.stepTitle}>{step.title}</Text>
-                <Text style={styles.stepDesc}>{step.desc}</Text>
-                {step.code && (
-                  <View style={styles.codeBox}>
-                    <Text style={styles.codeText}>{step.code}</Text>
-                  </View>
-                )}
-              </View>
-            </View>
-          ))}
-
-          <Pressable
-            style={styles.expoBtn}
-            onPress={() => Linking.openURL("https://expo.dev")}
-          >
-            <Feather name="external-link" size={16} color={C.background} />
-            <Text style={styles.expoBtnText}>Открыть expo.dev</Text>
-          </Pressable>
-
-          <Pressable style={styles.closeBtn} onPress={onClose}>
-            <Text style={styles.closeBtnText}>Закрыть</Text>
-          </Pressable>
-        </View>
-      </View>
-    </Modal>
-  );
-}
-
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const {
     xp, level, streak, getTotalLessonsCompleted,
     unlockedAchievements, favoriteIds, reviewLaterIds,
   } = useProgress();
-  const [buildModalVisible, setBuildModalVisible] = useState(false);
 
   const topPadding = Platform.OS === "web" ? 67 : insets.top;
   const totalCompleted = getTotalLessonsCompleted();
@@ -230,30 +152,25 @@ export default function ProfileScreen() {
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(80)}>
-          <Text style={styles.sectionTitle}>Установить на телефон</Text>
+          <Text style={styles.sectionTitle}>Android</Text>
           <Pressable
-            style={({ pressed }) => [styles.buildCard, pressed && { opacity: 0.9 }]}
-            onPress={() => setBuildModalVisible(true)}
+            style={({ pressed }) => [styles.buildCard, pressed && { opacity: 0.88 }]}
+            onPress={() => Linking.openURL(BUILDS_URL)}
           >
             <LinearGradient
-              colors={[C.tint + "22", C.accent + "15"]}
+              colors={["#39D35322", "#00D4FF11"]}
               style={StyleSheet.absoluteFill}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
             />
-            <View style={styles.buildCardLeft}>
-              <View style={styles.buildIconCircle}>
-                <Feather name="package" size={24} color={C.tint} />
-              </View>
-              <View>
-                <Text style={styles.buildTitle}>Собрать APK</Text>
-                <Text style={styles.buildSubtitle}>Android · EAS Build</Text>
-              </View>
+            <View style={styles.buildIconCircle}>
+              <Feather name="download" size={22} color="#39D353" />
             </View>
-            <View style={styles.buildBtn}>
-              <Feather name="play" size={14} color={C.background} />
-              <Text style={styles.buildBtnText}>Старт</Text>
+            <View style={styles.buildTextBlock}>
+              <Text style={styles.buildTitle}>Скачать APK</Text>
+              <Text style={styles.buildSubtitle}>expo.dev · zebradf/mobile</Text>
             </View>
+            <Feather name="external-link" size={18} color={C.textTertiary} />
           </Pressable>
         </Animated.View>
 
@@ -320,11 +237,6 @@ export default function ProfileScreen() {
           </View>
         </Animated.View>
       </ScrollView>
-
-      <BuildModal
-        visible={buildModalVisible}
-        onClose={() => setBuildModalVisible(false)}
-      />
     </View>
   );
 }
@@ -412,55 +324,36 @@ const styles = StyleSheet.create({
   buildCard: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    gap: 14,
     backgroundColor: C.card,
-    borderRadius: 18,
-    padding: 18,
+    borderRadius: 16,
+    padding: 16,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: C.tint + "44",
+    borderColor: "#39D35333",
     overflow: "hidden",
   },
-  buildCardLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 14,
-    flex: 1,
-  },
   buildIconCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
-    backgroundColor: C.tint + "22",
+    width: 44,
+    height: 44,
+    borderRadius: 13,
+    backgroundColor: "#39D35322",
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
-    borderColor: C.tint + "44",
+    borderColor: "#39D35344",
   },
+  buildTextBlock: { flex: 1 },
   buildTitle: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 16,
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 15,
     color: C.text,
-    marginBottom: 3,
+    marginBottom: 2,
   },
   buildSubtitle: {
     fontFamily: "Inter_400Regular",
     fontSize: 12,
     color: C.textSecondary,
-  },
-  buildBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    backgroundColor: C.tint,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-  },
-  buildBtnText: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 14,
-    color: C.background,
   },
   settingGroup: {
     backgroundColor: C.card,
@@ -513,129 +406,5 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_500Medium",
     fontSize: 14,
     color: C.text,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.6)",
-    justifyContent: "flex-end",
-  },
-  modalSheet: {
-    backgroundColor: C.card,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    padding: 24,
-    paddingBottom: 40,
-    borderWidth: 1,
-    borderColor: C.cardBorder,
-  },
-  modalHandle: {
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: C.cardBorder,
-    alignSelf: "center",
-    marginBottom: 24,
-  },
-  modalHeader: {
-    alignItems: "center",
-    marginBottom: 28,
-  },
-  modalIconCircle: {
-    width: 64,
-    height: 64,
-    borderRadius: 20,
-    backgroundColor: C.tint + "22",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 14,
-    borderWidth: 1,
-    borderColor: C.tint + "44",
-  },
-  modalTitle: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 22,
-    color: C.text,
-    marginBottom: 6,
-  },
-  modalSubtitle: {
-    fontFamily: "Inter_400Regular",
-    fontSize: 14,
-    color: C.textSecondary,
-    textAlign: "center",
-    lineHeight: 20,
-  },
-  stepRow: {
-    flexDirection: "row",
-    gap: 14,
-    marginBottom: 18,
-    alignItems: "flex-start",
-  },
-  stepNum: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: C.tint + "22",
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: C.tint + "44",
-    marginTop: 2,
-  },
-  stepNumText: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 13,
-    color: C.tint,
-  },
-  stepContent: { flex: 1 },
-  stepTitle: {
-    fontFamily: "Inter_600SemiBold",
-    fontSize: 15,
-    color: C.text,
-    marginBottom: 3,
-  },
-  stepDesc: {
-    fontFamily: "Inter_400Regular",
-    fontSize: 13,
-    color: C.textSecondary,
-    lineHeight: 18,
-    marginBottom: 6,
-  },
-  codeBox: {
-    backgroundColor: C.backgroundTertiary,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderWidth: 1,
-    borderColor: C.cardBorder,
-  },
-  codeText: {
-    fontFamily: Platform.OS === "ios" ? "Courier" : "monospace",
-    fontSize: 13,
-    color: C.tint,
-  },
-  expoBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    backgroundColor: C.tint,
-    borderRadius: 14,
-    paddingVertical: 14,
-    marginTop: 8,
-    marginBottom: 10,
-  },
-  expoBtnText: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 15,
-    color: C.background,
-  },
-  closeBtn: {
-    alignItems: "center",
-    paddingVertical: 12,
-  },
-  closeBtnText: {
-    fontFamily: "Inter_500Medium",
-    fontSize: 15,
-    color: C.textSecondary,
   },
 });
