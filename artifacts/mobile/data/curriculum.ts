@@ -35,6 +35,7 @@ export interface BuildConnection {
 export interface BuildChallenge {
   instruction: string;
   hint: string;
+  hints?: string[];
   nodes: BuildNode[];
   solution: BuildConnection[];
 }

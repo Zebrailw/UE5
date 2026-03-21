@@ -17,13 +17,14 @@ import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-import Colors from "@/constants/colors";
+import { useTheme, ThemeMode } from "@/context/ThemeContext";
 import { useProgress } from "@/context/ProgressContext";
 import { MODULES } from "@/data/curriculum";
 
-const C = Colors.dark;
-
 const BOOSTY_URL = "https://boosty.to/ue5bluprintsacademy";
+const TELEGRAM_URL = "https://t.me/ue5blueprintsacademy";
+const YOUTUBE_URL = "https://youtube.com/@ue5blueprintsacademy";
+const GITHUB_URL = "https://github.com/ue5blueprintsacademy";
 
 const DONATION_TIERS = [
   {
@@ -55,64 +56,32 @@ const DONATION_TIERS = [
   },
 ];
 
-function SettingRow({
-  icon,
-  label,
-  color,
-  onPress,
-  value,
-}: {
-  icon: string;
-  label: string;
-  color?: string;
-  onPress?: () => void;
-  value?: string;
-}) {
-  return (
-    <Pressable
-      style={({ pressed }) => [styles.settingRow, pressed && { opacity: 0.7 }]}
-      onPress={onPress}
-    >
-      <View style={[styles.settingIcon, { backgroundColor: (color || C.tint) + "22" }]}>
-        <Feather name={icon as any} size={16} color={color || C.tint} />
-      </View>
-      <Text style={styles.settingLabel}>{label}</Text>
-      {value && <Text style={styles.settingValue}>{value}</Text>}
-      <Feather name="chevron-right" size={16} color={C.textTertiary} />
-    </Pressable>
-  );
-}
+const THEME_OPTIONS: { mode: ThemeMode; label: string; icon: string }[] = [
+  { mode: "dark", label: "Тёмная", icon: "moon" },
+  { mode: "light", label: "Светлая", icon: "sun" },
+  { mode: "system", label: "Системная", icon: "smartphone" },
+];
 
-function DonationModal({ visible, onClose }: { visible: boolean; onClose: () => void }) {
+function DonationModal({ visible, onClose, C }: { visible: boolean; onClose: () => void; C: any }) {
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="slide"
-      onRequestClose={onClose}
-    >
-      <Pressable style={styles.modalOverlay} onPress={onClose}>
-        <Pressable style={styles.modalSheet} onPress={() => {}}>
-          <View style={styles.modalHandle} />
-          <Text style={styles.modalTitle}>Поддержать проект</Text>
-          <Text style={styles.modalSubtitle}>
-            Помоги развивать UE5 Blueprints Academy — добавлять уроки,
-            механики и новые функции
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+      <Pressable style={[styles.modalOverlay]} onPress={onClose}>
+        <Pressable style={[styles.modalSheet, { backgroundColor: C.card, borderColor: C.cardBorder }]} onPress={() => {}}>
+          <View style={[styles.modalHandle, { backgroundColor: C.cardBorder }]} />
+          <Text style={[styles.modalTitle, { color: C.text }]}>Поддержать проект</Text>
+          <Text style={[styles.modalSubtitle, { color: C.textSecondary }]}>
+            Помоги развивать UE5 Blueprints Academy — добавлять уроки, механики и новые функции
           </Text>
-
           <View style={styles.tierRow}>
             {DONATION_TIERS.map((tier) => (
               <Pressable
                 key={tier.id}
                 style={({ pressed }) => [
                   styles.tierCard,
-                  { borderColor: tier.color + "55" },
+                  { borderColor: tier.color + "55", backgroundColor: C.background },
                   pressed && { opacity: 0.82 },
                 ]}
-                onPress={() => {
-                  onClose();
-                  Linking.openURL(tier.url);
-                }}
+                onPress={() => { onClose(); Linking.openURL(tier.url); }}
               >
                 <LinearGradient
                   colors={[tier.color + "18", tier.color + "06"]}
@@ -122,35 +91,50 @@ function DonationModal({ visible, onClose }: { visible: boolean; onClose: () => 
                 />
                 <Text style={styles.tierEmoji}>{tier.emoji}</Text>
                 <Text style={[styles.tierAmount, { color: tier.color }]}>{tier.amount}</Text>
-                <Text style={styles.tierTitle}>{tier.title}</Text>
-                <Text style={styles.tierDesc}>{tier.description}</Text>
+                <Text style={[styles.tierTitle, { color: C.text }]}>{tier.title}</Text>
+                <Text style={[styles.tierDesc, { color: C.textSecondary }]}>{tier.description}</Text>
               </Pressable>
             ))}
           </View>
 
+          <View style={styles.monetizeGrid}>
+            <Pressable
+              style={({ pressed }) => [styles.monetizeBtn, { borderColor: "#0088CC44", backgroundColor: "#0088CC11" }, pressed && { opacity: 0.8 }]}
+              onPress={() => { onClose(); Linking.openURL(TELEGRAM_URL); }}
+            >
+              <Text style={styles.monetizeEmoji}>💬</Text>
+              <Text style={[styles.monetizeName, { color: C.text }]}>Telegram</Text>
+              <Text style={[styles.monetizeSub, { color: C.textSecondary }]}>Сообщество</Text>
+            </Pressable>
+            <Pressable
+              style={({ pressed }) => [styles.monetizeBtn, { borderColor: "#FF000044", backgroundColor: "#FF000011" }, pressed && { opacity: 0.8 }]}
+              onPress={() => { onClose(); Linking.openURL(YOUTUBE_URL); }}
+            >
+              <Text style={styles.monetizeEmoji}>▶️</Text>
+              <Text style={[styles.monetizeName, { color: C.text }]}>YouTube</Text>
+              <Text style={[styles.monetizeSub, { color: C.textSecondary }]}>Видео-уроки</Text>
+            </Pressable>
+            <Pressable
+              style={({ pressed }) => [styles.monetizeBtn, { borderColor: "#7B4FFF44", backgroundColor: "#7B4FFF11" }, pressed && { opacity: 0.8 }]}
+              onPress={() => { onClose(); Linking.openURL(GITHUB_URL); }}
+            >
+              <Text style={styles.monetizeEmoji}>⭐</Text>
+              <Text style={[styles.monetizeName, { color: C.text }]}>GitHub</Text>
+              <Text style={[styles.monetizeSub, { color: C.textSecondary }]}>Исходный код</Text>
+            </Pressable>
+          </View>
+
           <Pressable
-            style={({ pressed }) => [
-              styles.boostyBtn,
-              pressed && { opacity: 0.85 },
-            ]}
-            onPress={() => {
-              onClose();
-              Linking.openURL(BOOSTY_URL);
-            }}
+            style={({ pressed }) => [styles.boostyBtn, pressed && { opacity: 0.85 }]}
+            onPress={() => { onClose(); Linking.openURL(BOOSTY_URL); }}
           >
-            <LinearGradient
-              colors={["#FF6B35", "#FF4500"]}
-              style={StyleSheet.absoluteFill}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-            />
+            <LinearGradient colors={["#FF6B35", "#FF4500"]} style={StyleSheet.absoluteFill} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} />
             <Feather name="heart" size={18} color="#fff" />
             <Text style={styles.boostyBtnText}>Открыть Boosty</Text>
             <Feather name="external-link" size={16} color="#fff" />
           </Pressable>
-
           <Pressable onPress={onClose} style={styles.cancelBtn}>
-            <Text style={styles.cancelText}>Отмена</Text>
+            <Text style={[styles.cancelText, { color: C.textSecondary }]}>Отмена</Text>
           </Pressable>
         </Pressable>
       </Pressable>
@@ -160,6 +144,7 @@ function DonationModal({ visible, onClose }: { visible: boolean; onClose: () => 
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
+  const { colors: C, themeMode, setThemeMode } = useTheme();
   const {
     xp, level, streak, getTotalLessonsCompleted,
     unlockedAchievements, favoriteIds, reviewLaterIds,
@@ -197,17 +182,12 @@ export default function ProfileScreen() {
     return "Blueprint Master";
   };
 
-  const favLessons = MODULES.flatMap((m) =>
-    m.lessons.filter((l) => favoriteIds.includes(l.id))
-  );
-
-  const reviewLessons = MODULES.flatMap((m) =>
-    m.lessons.filter((l) => reviewLaterIds.includes(l.id))
-  );
+  const favLessons = MODULES.flatMap((m) => m.lessons.filter((l) => favoriteIds.includes(l.id)));
+  const reviewLessons = MODULES.flatMap((m) => m.lessons.filter((l) => reviewLaterIds.includes(l.id)));
 
   return (
-    <View style={styles.container}>
-      <DonationModal visible={donationVisible} onClose={() => setDonationVisible(false)} />
+    <View style={[styles.container, { backgroundColor: C.background }]}>
+      <DonationModal visible={donationVisible} onClose={() => setDonationVisible(false)} C={C} />
 
       <ScrollView
         contentContainerStyle={[
@@ -219,51 +199,50 @@ export default function ProfileScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <Animated.View entering={FadeInDown.delay(50)} style={styles.profileHero}>
+        <Animated.View entering={FadeInDown.delay(50)} style={[styles.profileHero, { backgroundColor: C.card, borderColor: C.tint + "33" }]}>
           <LinearGradient
             colors={[C.tint + "20", C.accent + "10"]}
             style={StyleSheet.absoluteFill}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
           />
-          <View style={styles.avatarCircle}>
+          <View style={[styles.avatarCircle, { backgroundColor: C.tint + "22", borderColor: C.tint + "55" }]}>
             <Feather name="user" size={32} color={C.tint} />
           </View>
-          <Text style={styles.rankName}>{getRankName()}</Text>
-          <View style={styles.levelBadge}>
-            <Text style={styles.levelBadgeText}>Уровень {level}</Text>
+          <Text style={[styles.rankName, { color: C.text }]}>{getRankName()}</Text>
+          <View style={[styles.levelBadge, { backgroundColor: C.tint + "22" }]}>
+            <Text style={[styles.levelBadgeText, { color: C.tint }]}>Уровень {level}</Text>
           </View>
-          <Text style={styles.xpText}>{xp.toLocaleString()} XP</Text>
-
+          <Text style={[styles.xpText, { color: C.textSecondary }]}>{xp.toLocaleString()} XP</Text>
           <View style={styles.heroStatsRow}>
             <View style={styles.heroStatItem}>
-              <Text style={styles.heroStatValue}>{totalCompleted}</Text>
-              <Text style={styles.heroStatLabel}>Уроков</Text>
+              <Text style={[styles.heroStatValue, { color: C.text }]}>{totalCompleted}</Text>
+              <Text style={[styles.heroStatLabel, { color: C.textSecondary }]}>Уроков</Text>
             </View>
-            <View style={styles.heroStatDivider} />
+            <View style={[styles.heroStatDivider, { backgroundColor: C.cardBorder }]} />
             <View style={styles.heroStatItem}>
-              <Text style={styles.heroStatValue}>{streak}</Text>
-              <Text style={styles.heroStatLabel}>Серия</Text>
+              <Text style={[styles.heroStatValue, { color: C.text }]}>{streak}</Text>
+              <Text style={[styles.heroStatLabel, { color: C.textSecondary }]}>Серия</Text>
             </View>
-            <View style={styles.heroStatDivider} />
+            <View style={[styles.heroStatDivider, { backgroundColor: C.cardBorder }]} />
             <View style={styles.heroStatItem}>
-              <Text style={styles.heroStatValue}>{unlockedAchievements.length}</Text>
-              <Text style={styles.heroStatLabel}>Значки</Text>
+              <Text style={[styles.heroStatValue, { color: C.text }]}>{unlockedAchievements.length}</Text>
+              <Text style={[styles.heroStatLabel, { color: C.textSecondary }]}>Значки</Text>
             </View>
-            <View style={styles.heroStatDivider} />
+            <View style={[styles.heroStatDivider, { backgroundColor: C.cardBorder }]} />
             <View style={styles.heroStatItem}>
-              <Text style={styles.heroStatValue}>
+              <Text style={[styles.heroStatValue, { color: C.text }]}>
                 {Math.round((totalCompleted / Math.max(totalLessons, 1)) * 100)}%
               </Text>
-              <Text style={styles.heroStatLabel}>Готово</Text>
+              <Text style={[styles.heroStatLabel, { color: C.textSecondary }]}>Готово</Text>
             </View>
           </View>
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(80)}>
-          <Text style={styles.sectionTitle}>Поддержать проект</Text>
+          <Text style={[styles.sectionTitle, { color: C.text }]}>Поддержать проект</Text>
           <Pressable
-            style={({ pressed }) => [styles.donateHeroCard, pressed && { opacity: 0.88 }]}
+            style={({ pressed }) => [styles.donateHeroCard, { backgroundColor: C.card, borderColor: "#7B4FFF33" }, pressed && { opacity: 0.88 }]}
             onPress={() => setDonationVisible(true)}
           >
             <LinearGradient
@@ -277,8 +256,8 @@ export default function ProfileScreen() {
                 <Feather name="heart" size={22} color="#7B4FFF" />
               </View>
               <View style={styles.buildTextBlock}>
-                <Text style={styles.buildTitle}>Поддержать разработку</Text>
-                <Text style={styles.buildSubtitle}>☕ Кофе · 🍕 Пицца · ⚡ Герой</Text>
+                <Text style={[styles.buildTitle, { color: C.text }]}>Поддержать разработку</Text>
+                <Text style={[styles.buildSubtitle, { color: C.textSecondary }]}>☕ Кофе · 🍕 Пицца · ⚡ Герой · 💬 Telegram · ▶️ YouTube</Text>
               </View>
             </View>
             <Feather name="chevron-right" size={20} color={C.textTertiary} />
@@ -287,15 +266,15 @@ export default function ProfileScreen() {
 
         {favLessons.length > 0 && (
           <Animated.View entering={FadeInDown.delay(120)}>
-            <Text style={styles.sectionTitle}>Избранное</Text>
+            <Text style={[styles.sectionTitle, { color: C.text }]}>Избранное</Text>
             {favLessons.slice(0, 5).map((lesson) => (
               <Pressable
                 key={lesson.id}
-                style={({ pressed }) => [styles.favCard, pressed && { opacity: 0.8 }]}
+                style={({ pressed }) => [styles.favCard, { backgroundColor: C.card, borderColor: C.cardBorder }, pressed && { opacity: 0.8 }]}
                 onPress={() => router.push(`/lesson/${lesson.id}`)}
               >
                 <Feather name="heart" size={14} color="#FF4757" />
-                <Text style={styles.favTitle} numberOfLines={1}>{lesson.title}</Text>
+                <Text style={[styles.favTitle, { color: C.text }]} numberOfLines={1}>{lesson.title}</Text>
                 <Feather name="chevron-right" size={14} color={C.textTertiary} />
               </Pressable>
             ))}
@@ -304,15 +283,15 @@ export default function ProfileScreen() {
 
         {reviewLessons.length > 0 && (
           <Animated.View entering={FadeInDown.delay(140)}>
-            <Text style={styles.sectionTitle}>Повторить позже</Text>
+            <Text style={[styles.sectionTitle, { color: C.text }]}>Повторить позже</Text>
             {reviewLessons.slice(0, 5).map((lesson) => (
               <Pressable
                 key={lesson.id}
-                style={({ pressed }) => [styles.favCard, pressed && { opacity: 0.8 }]}
+                style={({ pressed }) => [styles.favCard, { backgroundColor: C.card, borderColor: C.cardBorder }, pressed && { opacity: 0.8 }]}
                 onPress={() => router.push(`/lesson/${lesson.id}`)}
               >
                 <Feather name="bookmark" size={14} color={C.warning} />
-                <Text style={styles.favTitle} numberOfLines={1}>{lesson.title}</Text>
+                <Text style={[styles.favTitle, { color: C.text }]} numberOfLines={1}>{lesson.title}</Text>
                 <Feather name="chevron-right" size={14} color={C.textTertiary} />
               </Pressable>
             ))}
@@ -320,50 +299,81 @@ export default function ProfileScreen() {
         )}
 
         <Animated.View entering={FadeInDown.delay(160)}>
-          <Text style={styles.sectionTitle}>О приложении</Text>
-          <View style={styles.settingGroup}>
-            <SettingRow
-              icon="info"
-              label="О приложении"
-              value="v1.0"
-              onPress={() =>
-                Alert.alert(
-                  "UE5 Blueprints Academy",
-                  "Изучайте Blueprint для Unreal Engine 5 — от новичка до эксперта. 100+ механик, визуальные практики, система достижений."
-                )
-              }
-            />
-            <SettingRow
-              icon="star"
-              label="Оценить приложение"
-              onPress={() =>
-                Linking.openURL(
-                  "https://play.google.com/store/apps/details?id=com.zebradf.ue5blueprintsacademy"
-                )
-              }
-            />
-            <SettingRow
-              icon="message-circle"
-              label="Написать разработчику"
-              onPress={() => Linking.openURL("mailto:zebrailwkottop@gmail.com")}
-            />
-            <SettingRow
-              icon="heart"
-              label="Поддержать на Boosty"
-              onPress={() => Linking.openURL(BOOSTY_URL)}
-            />
+          <Text style={[styles.sectionTitle, { color: C.text }]}>Оформление</Text>
+          <View style={[styles.settingGroup, { backgroundColor: C.card, borderColor: C.cardBorder }]}>
+            <View style={[styles.themeRow, { borderBottomColor: C.separator }]}>
+              <View style={[styles.settingIcon, { backgroundColor: C.tint + "22" }]}>
+                <Feather name="moon" size={16} color={C.tint} />
+              </View>
+              <Text style={[styles.settingLabel, { color: C.text }]}>Тема</Text>
+            </View>
+            <View style={styles.themeSegmentRow}>
+              {THEME_OPTIONS.map((opt) => {
+                const active = themeMode === opt.mode;
+                return (
+                  <Pressable
+                    key={opt.mode}
+                    style={[
+                      styles.themeSegment,
+                      { borderColor: active ? C.tint : C.cardBorder, backgroundColor: active ? C.tint + "22" : "transparent" },
+                    ]}
+                    onPress={() => setThemeMode(opt.mode)}
+                  >
+                    <Feather name={opt.icon as any} size={14} color={active ? C.tint : C.textSecondary} />
+                    <Text style={[styles.themeSegmentText, { color: active ? C.tint : C.textSecondary }]}>
+                      {opt.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
           </View>
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(180)}>
-          <Text style={styles.sectionTitle}>Опасная зона</Text>
-          <View style={styles.settingGroup}>
-            <SettingRow
-              icon="trash-2"
-              label="Сбросить весь прогресс"
-              color="#FF4757"
+          <Text style={[styles.sectionTitle, { color: C.text }]}>О приложении</Text>
+          <View style={[styles.settingGroup, { backgroundColor: C.card, borderColor: C.cardBorder }]}>
+            {[
+              { icon: "info", label: "О приложении", value: "v1.0", action: () => Alert.alert("UE5 Blueprints Academy", "Изучайте Blueprint для Unreal Engine 5 — от новичка до эксперта. 100+ механик, визуальные практики, система достижений.") },
+              { icon: "star", label: "Оценить приложение", action: () => Linking.openURL("https://play.google.com/store/apps/details?id=com.zebradf.ue5blueprintsacademy") },
+              { icon: "send", label: "Telegram сообщество", action: () => Linking.openURL(TELEGRAM_URL), color: "#0088CC" },
+              { icon: "youtube", label: "YouTube канал", action: () => Linking.openURL(YOUTUBE_URL), color: "#FF0000" },
+              { icon: "message-circle", label: "Написать разработчику", action: () => Linking.openURL("mailto:zebrailwkottop@gmail.com") },
+              { icon: "heart", label: "Поддержать на Boosty", action: () => Linking.openURL(BOOSTY_URL), color: "#FF6B35" },
+            ].map((item, idx, arr) => (
+              <Pressable
+                key={item.label}
+                style={({ pressed }) => [
+                  styles.settingRow,
+                  { borderBottomColor: C.separator, borderBottomWidth: idx < arr.length - 1 ? 1 : 0 },
+                  pressed && { opacity: 0.7 },
+                ]}
+                onPress={item.action}
+              >
+                <View style={[styles.settingIcon, { backgroundColor: ((item.color || C.tint) + "22") }]}>
+                  <Feather name={item.icon as any} size={16} color={item.color || C.tint} />
+                </View>
+                <Text style={[styles.settingLabel, { color: C.text }]}>{item.label}</Text>
+                {item.value && <Text style={[styles.settingValue, { color: C.textSecondary }]}>{item.value}</Text>}
+                <Feather name="chevron-right" size={16} color={C.textTertiary} />
+              </Pressable>
+            ))}
+          </View>
+        </Animated.View>
+
+        <Animated.View entering={FadeInDown.delay(200)}>
+          <Text style={[styles.sectionTitle, { color: C.text }]}>Опасная зона</Text>
+          <View style={[styles.settingGroup, { backgroundColor: C.card, borderColor: C.cardBorder }]}>
+            <Pressable
+              style={({ pressed }) => [styles.settingRow, { borderBottomWidth: 0 }, pressed && { opacity: 0.7 }]}
               onPress={handleReset}
-            />
+            >
+              <View style={[styles.settingIcon, { backgroundColor: "#FF475722" }]}>
+                <Feather name="trash-2" size={16} color="#FF4757" />
+              </View>
+              <Text style={[styles.settingLabel, { color: "#FF4757" }]}>Сбросить весь прогресс</Text>
+              <Feather name="chevron-right" size={16} color={C.textTertiary} />
+            </Pressable>
           </View>
         </Animated.View>
       </ScrollView>
@@ -372,152 +382,87 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.background },
+  container: { flex: 1 },
   scrollContent: { paddingHorizontal: 20 },
   profileHero: {
-    backgroundColor: C.card,
     borderRadius: 24,
     padding: 24,
     alignItems: "center",
     marginBottom: 24,
     borderWidth: 1,
-    borderColor: C.tint + "33",
     overflow: "hidden",
   },
   avatarCircle: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: C.tint + "22",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 14,
     borderWidth: 2,
-    borderColor: C.tint + "55",
   },
-  rankName: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 20,
-    color: C.text,
-    marginBottom: 8,
-  },
-  levelBadge: {
-    backgroundColor: C.tint + "22",
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 4,
-    marginBottom: 6,
-  },
-  levelBadgeText: {
-    fontFamily: "Inter_600SemiBold",
-    fontSize: 13,
-    color: C.tint,
-  },
-  xpText: {
-    fontFamily: "Inter_400Regular",
-    fontSize: 13,
-    color: C.textSecondary,
-    marginBottom: 20,
-  },
-  heroStatsRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    width: "100%",
-  },
-  heroStatItem: {
-    flex: 1,
-    alignItems: "center",
-  },
-  heroStatDivider: {
-    width: 1,
-    height: 30,
-    backgroundColor: C.cardBorder,
-  },
-  heroStatValue: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 20,
-    color: C.text,
-  },
-  heroStatLabel: {
-    fontFamily: "Inter_400Regular",
-    fontSize: 11,
-    color: C.textSecondary,
-    marginTop: 2,
-  },
-  sectionTitle: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 16,
-    color: C.text,
-    marginBottom: 12,
-    marginTop: 4,
-  },
+  rankName: { fontFamily: "Inter_700Bold", fontSize: 20, marginBottom: 8 },
+  levelBadge: { borderRadius: 10, paddingHorizontal: 14, paddingVertical: 4, marginBottom: 6 },
+  levelBadgeText: { fontFamily: "Inter_600SemiBold", fontSize: 13 },
+  xpText: { fontFamily: "Inter_400Regular", fontSize: 13, marginBottom: 20 },
+  heroStatsRow: { flexDirection: "row", alignItems: "center", width: "100%" },
+  heroStatItem: { flex: 1, alignItems: "center" },
+  heroStatDivider: { width: 1, height: 30 },
+  heroStatValue: { fontFamily: "Inter_700Bold", fontSize: 20 },
+  heroStatLabel: { fontFamily: "Inter_400Regular", fontSize: 11, marginTop: 2 },
+  sectionTitle: { fontFamily: "Inter_700Bold", fontSize: 16, marginBottom: 12, marginTop: 4 },
   donateHeroCard: {
     flexDirection: "row",
     alignItems: "center",
     gap: 14,
-    backgroundColor: C.card,
     borderRadius: 16,
     padding: 16,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: "#7B4FFF33",
     overflow: "hidden",
   },
-  donateHeroLeft: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 14,
-  },
-  buildCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 14,
-    backgroundColor: C.card,
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: "#39D35333",
-    overflow: "hidden",
-  },
+  donateHeroLeft: { flex: 1, flexDirection: "row", alignItems: "center", gap: 14 },
   buildIconCircle: {
     width: 44,
     height: 44,
     borderRadius: 13,
-    backgroundColor: "#39D35322",
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
-    borderColor: "#39D35344",
   },
   buildTextBlock: { flex: 1 },
-  buildTitle: {
-    fontFamily: "Inter_600SemiBold",
-    fontSize: 15,
-    color: C.text,
-    marginBottom: 2,
+  buildTitle: { fontFamily: "Inter_600SemiBold", fontSize: 15, marginBottom: 2 },
+  buildSubtitle: { fontFamily: "Inter_400Regular", fontSize: 11 },
+  settingGroup: { borderRadius: 16, marginBottom: 20, borderWidth: 1, overflow: "hidden" },
+  themeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    padding: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
   },
-  buildSubtitle: {
-    fontFamily: "Inter_400Regular",
-    fontSize: 12,
-    color: C.textSecondary,
+  themeSegmentRow: {
+    flexDirection: "row",
+    gap: 8,
+    padding: 12,
   },
-  settingGroup: {
-    backgroundColor: C.card,
-    borderRadius: 16,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: C.cardBorder,
-    overflow: "hidden",
+  themeSegment: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 10,
+    borderRadius: 10,
+    borderWidth: 1.5,
   },
+  themeSegmentText: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
   settingRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 14,
     padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: C.separator,
   },
   settingIcon: {
     width: 34,
@@ -526,107 +471,55 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  settingLabel: {
-    flex: 1,
-    fontFamily: "Inter_500Medium",
-    fontSize: 15,
-    color: C.text,
-  },
-  settingValue: {
-    fontFamily: "Inter_400Regular",
-    fontSize: 14,
-    color: C.textSecondary,
-    marginRight: 4,
-  },
+  settingLabel: { flex: 1, fontFamily: "Inter_500Medium", fontSize: 15 },
+  settingValue: { fontFamily: "Inter_400Regular", fontSize: 14, marginRight: 4 },
   favCard: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    backgroundColor: C.card,
     borderRadius: 12,
     padding: 14,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: C.cardBorder,
   },
-  favTitle: {
-    flex: 1,
-    fontFamily: "Inter_500Medium",
-    fontSize: 14,
-    color: C.text,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "#00000088",
-    justifyContent: "flex-end",
-  },
+  favTitle: { flex: 1, fontFamily: "Inter_500Medium", fontSize: 14 },
+  modalOverlay: { flex: 1, backgroundColor: "#00000088", justifyContent: "flex-end" },
   modalSheet: {
-    backgroundColor: C.card,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     padding: 24,
     paddingBottom: 40,
     borderWidth: 1,
-    borderColor: C.cardBorder,
   },
-  modalHandle: {
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: C.cardBorder,
-    alignSelf: "center",
-    marginBottom: 20,
-  },
-  modalTitle: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 22,
-    color: C.text,
-    textAlign: "center",
-    marginBottom: 8,
-  },
-  modalSubtitle: {
-    fontFamily: "Inter_400Regular",
-    fontSize: 14,
-    color: C.textSecondary,
-    textAlign: "center",
-    lineHeight: 20,
-    marginBottom: 24,
-  },
-  tierRow: {
-    flexDirection: "row",
-    gap: 10,
-    marginBottom: 20,
-  },
+  modalHandle: { width: 40, height: 4, borderRadius: 2, alignSelf: "center", marginBottom: 20 },
+  modalTitle: { fontFamily: "Inter_700Bold", fontSize: 22, textAlign: "center", marginBottom: 8 },
+  modalSubtitle: { fontFamily: "Inter_400Regular", fontSize: 14, textAlign: "center", lineHeight: 20, marginBottom: 24 },
+  tierRow: { flexDirection: "row", gap: 10, marginBottom: 16 },
   tierCard: {
     flex: 1,
     borderRadius: 16,
     padding: 12,
     alignItems: "center",
     borderWidth: 1,
-    backgroundColor: C.background,
     overflow: "hidden",
     gap: 4,
   },
-  tierEmoji: {
-    fontSize: 26,
-    marginBottom: 4,
+  tierEmoji: { fontSize: 26, marginBottom: 4 },
+  tierAmount: { fontFamily: "Inter_700Bold", fontSize: 18 },
+  tierTitle: { fontFamily: "Inter_600SemiBold", fontSize: 13 },
+  tierDesc: { fontFamily: "Inter_400Regular", fontSize: 11, textAlign: "center", lineHeight: 15 },
+  monetizeGrid: { flexDirection: "row", gap: 8, marginBottom: 16 },
+  monetizeBtn: {
+    flex: 1,
+    alignItems: "center",
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    gap: 4,
   },
-  tierAmount: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 18,
-  },
-  tierTitle: {
-    fontFamily: "Inter_600SemiBold",
-    fontSize: 13,
-    color: C.text,
-  },
-  tierDesc: {
-    fontFamily: "Inter_400Regular",
-    fontSize: 11,
-    color: C.textSecondary,
-    textAlign: "center",
-    lineHeight: 15,
-  },
+  monetizeEmoji: { fontSize: 22 },
+  monetizeName: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
+  monetizeSub: { fontFamily: "Inter_400Regular", fontSize: 10 },
   boostyBtn: {
     flexDirection: "row",
     alignItems: "center",
@@ -637,18 +530,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     marginBottom: 12,
   },
-  boostyBtnText: {
-    fontFamily: "Inter_600SemiBold",
-    fontSize: 16,
-    color: "#fff",
-  },
-  cancelBtn: {
-    alignItems: "center",
-    paddingVertical: 10,
-  },
-  cancelText: {
-    fontFamily: "Inter_500Medium",
-    fontSize: 15,
-    color: C.textSecondary,
-  },
+  boostyBtnText: { fontFamily: "Inter_600SemiBold", fontSize: 16, color: "#fff" },
+  cancelBtn: { alignItems: "center", paddingVertical: 10 },
+  cancelText: { fontFamily: "Inter_500Medium", fontSize: 15 },
 });
