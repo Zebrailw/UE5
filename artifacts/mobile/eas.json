@@ -17,5 +17,12 @@
         "resourceClass": "m-medium"
       }
     }
+  },
+  "submit": {
+    "production": {
+      "android": {
+        "track": "internal"
+      }
+    }
   }
 }
