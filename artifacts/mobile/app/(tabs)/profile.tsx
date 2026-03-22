@@ -23,7 +23,6 @@ import { MODULES } from "@/data/curriculum";
 
 const BOOSTY_URL = "https://boosty.to/ue5bluprintsacademy";
 const TELEGRAM_URL = "https://t.me/ue5blueprintsacademy";
-const YOUTUBE_URL = "https://youtube.com/@ue5blueprintsacademy";
 const GITHUB_URL = "https://github.com/ue5blueprintsacademy";
 
 const DONATION_TIERS = [
@@ -105,14 +104,6 @@ function DonationModal({ visible, onClose, C }: { visible: boolean; onClose: () 
               <Text style={styles.monetizeEmoji}>💬</Text>
               <Text style={[styles.monetizeName, { color: C.text }]}>Telegram</Text>
               <Text style={[styles.monetizeSub, { color: C.textSecondary }]}>Сообщество</Text>
-            </Pressable>
-            <Pressable
-              style={({ pressed }) => [styles.monetizeBtn, { borderColor: "#FF000044", backgroundColor: "#FF000011" }, pressed && { opacity: 0.8 }]}
-              onPress={() => { onClose(); Linking.openURL(YOUTUBE_URL); }}
-            >
-              <Text style={styles.monetizeEmoji}>▶️</Text>
-              <Text style={[styles.monetizeName, { color: C.text }]}>YouTube</Text>
-              <Text style={[styles.monetizeSub, { color: C.textSecondary }]}>Видео-уроки</Text>
             </Pressable>
             <Pressable
               style={({ pressed }) => [styles.monetizeBtn, { borderColor: "#7B4FFF44", backgroundColor: "#7B4FFF11" }, pressed && { opacity: 0.8 }]}
@@ -257,7 +248,7 @@ export default function ProfileScreen() {
               </View>
               <View style={styles.buildTextBlock}>
                 <Text style={[styles.buildTitle, { color: C.text }]}>Поддержать разработку</Text>
-                <Text style={[styles.buildSubtitle, { color: C.textSecondary }]}>☕ Кофе · 🍕 Пицца · ⚡ Герой · 💬 Telegram · ▶️ YouTube</Text>
+                <Text style={[styles.buildSubtitle, { color: C.textSecondary }]}>☕ Кофе · 🍕 Пицца · ⚡ Герой · 💬 Telegram</Text>
               </View>
             </View>
             <Feather name="chevron-right" size={20} color={C.textTertiary} />
@@ -337,7 +328,6 @@ export default function ProfileScreen() {
               { icon: "info", label: "О приложении", value: "v1.0", action: () => Alert.alert("UE5 Blueprints Academy", "Изучайте Blueprint для Unreal Engine 5 — от новичка до эксперта. 100+ механик, визуальные практики, система достижений.") },
               { icon: "star", label: "Оценить приложение", action: () => Linking.openURL("https://play.google.com/store/apps/details?id=com.zebradf.ue5blueprintsacademy") },
               { icon: "send", label: "Telegram сообщество", action: () => Linking.openURL(TELEGRAM_URL), color: "#0088CC" },
-              { icon: "youtube", label: "YouTube канал", action: () => Linking.openURL(YOUTUBE_URL), color: "#FF0000" },
               { icon: "message-circle", label: "Написать разработчику", action: () => Linking.openURL("mailto:zebrailwkottop@gmail.com") },
               { icon: "heart", label: "Поддержать на Boosty", action: () => Linking.openURL(BOOSTY_URL), color: "#FF6B35" },
             ].map((item, idx, arr) => (
