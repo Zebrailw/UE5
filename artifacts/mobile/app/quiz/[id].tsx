@@ -151,7 +151,7 @@ export default function QuizScreen() {
             <Text style={styles.resultSubtitle}>
               {score} из {questions.length} правильных
             </Text>
-            {isPerfect && (
+            {isPassing && (
               <View style={styles.xpBonusRow}>
                 <Feather name="zap" size={15} color={C.warning} />
                 <Text style={styles.xpBonusText}>+{lesson.xpReward} XP получено!</Text>

@@ -330,6 +330,7 @@ export default function ProfileScreen() {
               { icon: "send", label: "Telegram сообщество", action: () => Linking.openURL(TELEGRAM_URL), color: "#0088CC" },
               { icon: "message-circle", label: "Написать разработчику", action: () => Linking.openURL("mailto:zebrailwkottop@gmail.com") },
               { icon: "heart", label: "Поддержать на Boosty", action: () => Linking.openURL(BOOSTY_URL), color: "#FF6B35" },
+              { icon: "shield", label: "Политика конфиденциальности", action: () => router.push("/privacy") },
             ].map((item, idx, arr) => (
               <Pressable
                 key={item.label}

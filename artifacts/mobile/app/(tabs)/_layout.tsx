@@ -70,6 +70,7 @@ function ClassicTabLayout() {
           paddingBottom: isWeb ? 0 : insets.bottom,
           ...(isWeb ? { height: 84 } : {}),
         },
+        tabBarScrollEnabled: !isIOS && !isWeb,
         tabBarBackground: () =>
           isIOS ? (
             <BlurView intensity={80} tint={isDark ? "dark" : "light"} style={StyleSheet.absoluteFill} />
