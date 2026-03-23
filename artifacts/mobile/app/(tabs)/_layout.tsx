@@ -33,6 +33,10 @@ function NativeTabLayout() {
         <Icon sf={{ default: "pencil.and.list.clipboard", selected: "pencil.and.list.clipboard" }} />
         <Label>Практика</Label>
       </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="node-editor">
+        <Icon sf={{ default: "flowchart", selected: "flowchart.fill" }} />
+        <Label>Редактор</Label>
+      </NativeTabs.Trigger>
       <NativeTabs.Trigger name="progress">
         <Icon sf={{ default: "chart.bar", selected: "chart.bar.fill" }} />
         <Label>Прогресс</Label>
@@ -141,6 +145,18 @@ function ClassicTabLayout() {
               <SymbolView name="pencil.and.list.clipboard" tintColor={color} size={22} />
             ) : (
               <Feather name="edit-3" size={22} color={color} />
+            ),
+        }}
+      />
+      <Tabs.Screen
+        name="node-editor"
+        options={{
+          title: "Редактор",
+          tabBarIcon: ({ color }) =>
+            isIOS ? (
+              <SymbolView name="flowchart" tintColor={color} size={22} />
+            ) : (
+              <Feather name="share-2" size={22} color={color} />
             ),
         }}
       />

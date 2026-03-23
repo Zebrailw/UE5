@@ -58,8 +58,9 @@ artifacts-monorepo/
 ### App Screens
 - **Home** — XP bar, stats, continue learning card, module overview
 - **Learn** — Full curriculum with search, filter, lesson list
-- **Mechanics** — 120+ mechanics with search, category filter, detail view (NEW)
-- **Practice** — Visual Blueprint node connection editor with 12+ challenges (NEW)
+- **Mechanics** — 120+ mechanics with search, category filter, detail view
+- **Practice** — Visual Blueprint node connection editor with 12+ challenges
+- **Node Editor (Редактор)** — Free-form node graph editor: Input/Math/Output nodes, drag-to-connect pins, JSON export via system Share sheet, Unreal Engine integration guide modal (NEW)
 - **Progress** — Module progress bars, achievements, stats grid
 - **Profile** — User rank, favorites, review later, donation modal, settings
 - **Lesson** — Theory content, practice tab, complete & quiz actions
