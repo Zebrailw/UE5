@@ -1,11 +1,12 @@
-import React, { useState, useCallback } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
   Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
@@ -13,11 +14,10 @@ import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 
 import Colors from "@/constants/colors";
+import { useTheme } from "@/context/ThemeContext";
 import BlueprintBuilder from "@/components/BlueprintBuilder";
 import { BLUEPRINT_CHALLENGES, BlueprintChallenge, getRandomChallenge } from "@/data/blueprintChallenges";
 import { BuildConnection } from "@/data/curriculum";
-
-const C = Colors.dark;
 
 const DIFFICULTY_COLORS: Record<string, string> = {
   Beginner: "#00D4FF",
@@ -30,6 +30,8 @@ const DIFFICULTY_COLORS: Record<string, string> = {
 type Stage = "intro" | "building" | "result";
 
 export default function PracticeScreen() {
+  const { colors: C } = useTheme();
+  const styles = useMemo(() => createStyles(C), [C]);
   const insets = useSafeAreaInsets();
   const isWeb = Platform.OS === "web";
   const tabBarHeight = isWeb ? 84 : insets.bottom + 50;
@@ -107,7 +109,6 @@ export default function PracticeScreen() {
           ]}
           showsVerticalScrollIndicator={false}
         >
-          {/* Header */}
           <View style={styles.header}>
             <View>
               <Text style={styles.headerTitle}>Практика</Text>
@@ -131,7 +132,6 @@ export default function PracticeScreen() {
             </View>
           </View>
 
-          {/* Challenge Card */}
           <LinearGradient colors={["#141C28", "#0F1620"]} style={styles.card}>
             <View style={styles.cardMeta}>
               <View style={styles.categoryTag}>
@@ -156,7 +156,6 @@ export default function PracticeScreen() {
             </View>
           </LinearGradient>
 
-          {/* Node Preview */}
           <View style={styles.previewSection}>
             <Text style={styles.previewLabel}>НОДЫ ДЛЯ СОЕДИНЕНИЯ</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.previewScroll}>
@@ -194,7 +193,6 @@ export default function PracticeScreen() {
             </ScrollView>
           </View>
 
-          {/* Result */}
           {stage === "result" && (
             <LinearGradient
               colors={
@@ -264,7 +262,6 @@ export default function PracticeScreen() {
             </LinearGradient>
           )}
 
-          {/* Start Button */}
           {stage === "intro" && (
             <View style={styles.startSection}>
               <View style={styles.hintBox}>
@@ -286,7 +283,6 @@ export default function PracticeScreen() {
         </ScrollView>
       )}
 
-      {/* Blueprint Builder */}
       {stage === "building" && (
         <View style={[styles.builderWrap, { paddingTop: isWeb ? 67 : insets.top, paddingBottom: tabBarHeight }]}>
           <View style={styles.builderHeader}>
@@ -308,376 +304,187 @@ export default function PracticeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: C.background,
-  },
-  scroll: {
-    flex: 1,
-  },
-  container: {
-    paddingHorizontal: 16,
-    gap: 14,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 4,
-  },
-  headerTitle: {
-    fontSize: 26,
-    fontWeight: "700",
-    color: C.text,
-    letterSpacing: -0.5,
-  },
-  headerSub: {
-    fontSize: 13,
-    color: C.textSecondary,
-    marginTop: 1,
-  },
-  statsRow: {
-    flexDirection: "row",
-    gap: 6,
-    alignItems: "center",
-  },
-  streakBadge: {
-    backgroundColor: "rgba(255,107,53,0.15)",
-    borderRadius: 20,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderWidth: 1,
-    borderColor: "rgba(255,107,53,0.3)",
-  },
-  streakText: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: "#FF6B35",
-  },
-  solvedBadge: {
-    flexDirection: "row",
-    gap: 4,
-    alignItems: "center",
-    backgroundColor: "rgba(57,211,83,0.1)",
-    borderRadius: 20,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderWidth: 1,
-    borderColor: "rgba(57,211,83,0.25)",
-  },
-  solvedText: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: C.success,
-  },
-  xpBadge: {
-    backgroundColor: "rgba(255,184,0,0.1)",
-    borderRadius: 20,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderWidth: 1,
-    borderColor: "rgba(255,184,0,0.3)",
-  },
-  xpText: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: C.warning,
-  },
-  card: {
-    borderRadius: 16,
-    padding: 18,
-    borderWidth: 1,
-    borderColor: C.cardBorder,
-    gap: 12,
-  },
-  cardMeta: {
-    flexDirection: "row",
-    gap: 7,
-    flexWrap: "wrap",
-  },
-  categoryTag: {
-    backgroundColor: "rgba(0,212,255,0.1)",
-    borderRadius: 6,
-    paddingHorizontal: 9,
-    paddingVertical: 3,
-    borderWidth: 1,
-    borderColor: "rgba(0,212,255,0.2)",
-  },
-  categoryText: {
-    fontSize: 11,
-    color: C.tint,
-    fontWeight: "600",
-  },
-  difficultyTag: {
-    borderRadius: 6,
-    paddingHorizontal: 9,
-    paddingVertical: 3,
-    borderWidth: 1,
-  },
-  difficultyText: {
-    fontSize: 11,
-    fontWeight: "600",
-  },
-  xpTag: {
-    backgroundColor: "rgba(255,184,0,0.1)",
-    borderRadius: 6,
-    paddingHorizontal: 9,
-    paddingVertical: 3,
-    borderWidth: 1,
-    borderColor: "rgba(255,184,0,0.25)",
-  },
-  xpTagText: {
-    fontSize: 11,
-    color: C.warning,
-    fontWeight: "600",
-  },
-  challengeTitle: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: C.text,
-    letterSpacing: -0.3,
-  },
-  challengeDesc: {
-    fontSize: 14,
-    color: C.textSecondary,
-    lineHeight: 21,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: C.cardBorder,
-  },
-  instructionBox: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    backgroundColor: "rgba(0,212,255,0.06)",
-    borderRadius: 10,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: "rgba(0,212,255,0.15)",
-  },
-  instructionText: {
-    flex: 1,
-    fontSize: 13,
-    color: C.text,
-    lineHeight: 19,
-  },
-  previewSection: {
-    gap: 8,
-  },
-  previewLabel: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: C.textTertiary,
-    letterSpacing: 0.8,
-  },
-  previewScroll: {
-    flexGrow: 0,
-  },
-  previewRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 0,
-    paddingVertical: 4,
-  },
-  previewNode: {
-    borderRadius: 8,
-    borderWidth: 1.5,
-    overflow: "hidden",
-    minWidth: 90,
-    maxWidth: 130,
-  },
-  previewNodeHeader: {
-    paddingHorizontal: 8,
-    paddingVertical: 5,
-  },
-  previewNodeTitle: {
-    fontSize: 10,
-    color: "#FFF",
-    fontWeight: "700",
-    fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
-  },
-  previewNodeBody: {
-    backgroundColor: "#111820",
-    paddingHorizontal: 8,
-    paddingVertical: 5,
-    gap: 2,
-  },
-  previewPin: {
-    fontSize: 9,
-    color: C.textSecondary,
-    fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
-  },
-  previewArrow: {
-    width: 28,
-    alignItems: "center",
-  },
-  hintBox: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 8,
-    backgroundColor: "rgba(255,184,0,0.08)",
-    borderRadius: 12,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: "rgba(255,184,0,0.2)",
-  },
-  hintText: {
-    flex: 1,
-    fontSize: 13,
-    color: C.text,
-    lineHeight: 19,
-  },
-  startSection: {
-    gap: 10,
-  },
-  startBtn: {
-    borderRadius: 14,
-    overflow: "hidden",
-  },
-  startGrad: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 10,
-    paddingVertical: 16,
-  },
-  startText: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#0A0E14",
-  },
-  skipBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    paddingVertical: 10,
-  },
-  skipText: {
-    fontSize: 13,
-    color: C.textSecondary,
-  },
-  resultCard: {
-    borderRadius: 16,
-    padding: 18,
-    borderWidth: 1,
-    gap: 12,
-  },
-  resultHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 14,
-  },
-  resultIcon: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  resultTitle: {
-    fontSize: 17,
-    fontWeight: "700",
-  },
-  resultSub: {
-    fontSize: 12,
-    color: C.textSecondary,
-    marginTop: 2,
-  },
-  solutionLabel: {
-    fontSize: 10,
-    fontWeight: "700",
-    color: C.textTertiary,
-    letterSpacing: 0.6,
-  },
-  connRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    flexWrap: "wrap",
-  },
-  connBadge: {
-    backgroundColor: "rgba(0,212,255,0.1)",
-    borderRadius: 5,
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-    borderWidth: 1,
-    borderColor: "rgba(0,212,255,0.2)",
-  },
-  connBadgeText: {
-    fontSize: 11,
-    color: C.tint,
-    fontWeight: "600",
-    fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
-  },
-  connPins: {
-    fontSize: 10,
-    color: C.textTertiary,
-    fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
-  },
-  resultActions: {
-    gap: 8,
-    marginTop: 4,
-  },
-  retryBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    paddingVertical: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: C.tint + "40",
-    backgroundColor: C.tint + "10",
-  },
-  retryText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: C.tint,
-  },
-  nextBtn: {
-    borderRadius: 14,
-    overflow: "hidden",
-  },
-  nextGrad: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 10,
-    paddingVertical: 14,
-  },
-  nextText: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: "#0A0E14",
-  },
-  builderWrap: {
-    flex: 1,
-    backgroundColor: C.background,
-  },
-  builderHeader: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: C.cardBorder,
-  },
-  backBtn: {
-    padding: 4,
-    marginTop: 2,
-  },
-  builderTitle: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: C.text,
-  },
-  builderSubtitle: {
-    fontSize: 12,
-    color: C.textSecondary,
-    marginTop: 2,
-    lineHeight: 17,
-  },
-});
+function createStyles(C: typeof Colors.dark) {
+  return StyleSheet.create({
+    root: { flex: 1, backgroundColor: C.background },
+    scroll: { flex: 1 },
+    container: { paddingHorizontal: 16, gap: 14 },
+    header: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginBottom: 4,
+    },
+    headerTitle: { fontSize: 26, fontWeight: "700", color: C.text, letterSpacing: -0.5 },
+    headerSub: { fontSize: 13, color: C.textSecondary, marginTop: 1 },
+    statsRow: { flexDirection: "row", gap: 6, alignItems: "center" },
+    streakBadge: {
+      backgroundColor: "rgba(255,107,53,0.15)",
+      borderRadius: 20,
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      borderWidth: 1,
+      borderColor: "rgba(255,107,53,0.3)",
+    },
+    streakText: { fontSize: 12, fontWeight: "700", color: "#FF6B35" },
+    solvedBadge: {
+      flexDirection: "row",
+      gap: 4,
+      alignItems: "center",
+      backgroundColor: "rgba(57,211,83,0.1)",
+      borderRadius: 20,
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      borderWidth: 1,
+      borderColor: "rgba(57,211,83,0.25)",
+    },
+    solvedText: { fontSize: 12, fontWeight: "700", color: C.success },
+    xpBadge: {
+      backgroundColor: "rgba(255,184,0,0.1)",
+      borderRadius: 20,
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      borderWidth: 1,
+      borderColor: "rgba(255,184,0,0.3)",
+    },
+    xpText: { fontSize: 12, fontWeight: "700", color: C.warning },
+    card: { borderRadius: 16, padding: 18, borderWidth: 1, borderColor: C.cardBorder, gap: 12 },
+    cardMeta: { flexDirection: "row", gap: 7, flexWrap: "wrap" },
+    categoryTag: {
+      backgroundColor: "rgba(0,212,255,0.1)",
+      borderRadius: 6,
+      paddingHorizontal: 9,
+      paddingVertical: 3,
+      borderWidth: 1,
+      borderColor: "rgba(0,212,255,0.2)",
+    },
+    categoryText: { fontSize: 11, color: C.tint, fontWeight: "600" },
+    difficultyTag: { borderRadius: 6, paddingHorizontal: 9, paddingVertical: 3, borderWidth: 1 },
+    difficultyText: { fontSize: 11, fontWeight: "600" },
+    xpTag: {
+      backgroundColor: "rgba(255,184,0,0.1)",
+      borderRadius: 6,
+      paddingHorizontal: 9,
+      paddingVertical: 3,
+      borderWidth: 1,
+      borderColor: "rgba(255,184,0,0.25)",
+    },
+    xpTagText: { fontSize: 11, color: C.warning, fontWeight: "600" },
+    challengeTitle: { fontSize: 20, fontWeight: "700", color: "#E8ECF0", letterSpacing: -0.3 },
+    challengeDesc: { fontSize: 14, color: "#8B9BB4", lineHeight: 21 },
+    divider: { height: 1, backgroundColor: C.cardBorder },
+    instructionBox: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+      backgroundColor: "rgba(0,212,255,0.06)",
+      borderRadius: 10,
+      padding: 12,
+      borderWidth: 1,
+      borderColor: "rgba(0,212,255,0.15)",
+    },
+    instructionText: { flex: 1, fontSize: 13, color: "#C8D0DC", lineHeight: 19 },
+    previewSection: { gap: 8 },
+    previewLabel: { fontSize: 11, fontWeight: "700", color: C.textTertiary, letterSpacing: 0.8 },
+    previewScroll: { flexGrow: 0 },
+    previewRow: { flexDirection: "row", alignItems: "center", gap: 0, paddingVertical: 4 },
+    previewNode: { borderRadius: 8, borderWidth: 1.5, overflow: "hidden", minWidth: 90, maxWidth: 130 },
+    previewNodeHeader: { paddingHorizontal: 8, paddingVertical: 5 },
+    previewNodeTitle: {
+      fontSize: 10,
+      color: "#FFF",
+      fontWeight: "700",
+      fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
+    },
+    previewNodeBody: { backgroundColor: "#111820", paddingHorizontal: 8, paddingVertical: 5, gap: 2 },
+    previewPin: {
+      fontSize: 9,
+      color: "#8B9BB4",
+      fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
+    },
+    previewArrow: { width: 28, alignItems: "center" },
+    hintBox: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+      gap: 8,
+      backgroundColor: "rgba(255,184,0,0.08)",
+      borderRadius: 12,
+      padding: 14,
+      borderWidth: 1,
+      borderColor: "rgba(255,184,0,0.2)",
+    },
+    hintText: { flex: 1, fontSize: 13, color: C.text, lineHeight: 19 },
+    startSection: { gap: 10 },
+    startBtn: { borderRadius: 14, overflow: "hidden" },
+    startGrad: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 10,
+      paddingVertical: 16,
+    },
+    startText: { fontSize: 16, fontWeight: "700", color: "#0A0E14" },
+    skipBtn: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 6,
+      paddingVertical: 10,
+    },
+    skipText: { fontSize: 13, color: C.textSecondary },
+    resultCard: { borderRadius: 16, padding: 18, borderWidth: 1, gap: 12 },
+    resultHeader: { flexDirection: "row", alignItems: "center", gap: 14 },
+    resultIcon: { width: 46, height: 46, borderRadius: 23, alignItems: "center", justifyContent: "center" },
+    resultTitle: { fontSize: 17, fontWeight: "700" },
+    resultSub: { fontSize: 12, color: C.textSecondary, marginTop: 2 },
+    solutionLabel: { fontSize: 10, fontWeight: "700", color: C.textTertiary, letterSpacing: 0.6 },
+    connRow: { flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" },
+    connBadge: {
+      backgroundColor: "rgba(0,212,255,0.1)",
+      borderRadius: 5,
+      paddingHorizontal: 7,
+      paddingVertical: 3,
+      borderWidth: 1,
+      borderColor: "rgba(0,212,255,0.2)",
+    },
+    connBadgeText: {
+      fontSize: 11,
+      color: C.tint,
+      fontWeight: "600",
+      fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
+    },
+    connPins: {
+      fontSize: 10,
+      color: C.textTertiary,
+      fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
+    },
+    resultActions: { gap: 8, marginTop: 4 },
+    retryBtn: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 8,
+      paddingVertical: 12,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: C.tint + "40",
+      backgroundColor: C.tint + "10",
+    },
+    retryText: { fontSize: 14, fontWeight: "600", color: C.tint },
+    nextBtn: { borderRadius: 14, overflow: "hidden" },
+    nextGrad: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10, paddingVertical: 14 },
+    nextText: { fontSize: 15, fontWeight: "700", color: "#0A0E14" },
+    builderWrap: { flex: 1, backgroundColor: C.background },
+    builderHeader: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+      gap: 10,
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: C.cardBorder,
+    },
+    backBtn: { padding: 4, marginTop: 2 },
+    builderTitle: { fontSize: 15, fontWeight: "700", color: C.text },
+    builderSubtitle: { fontSize: 12, color: C.textSecondary, marginTop: 2, lineHeight: 17 },
+  });
+}

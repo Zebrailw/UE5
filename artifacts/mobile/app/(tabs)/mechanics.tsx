@@ -1,9 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { router } from "expo-router";
-import React, { useState, useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import {
-  FlatList,
   Platform,
   Pressable,
   ScrollView,
@@ -12,10 +10,11 @@ import {
   TextInput,
   View,
 } from "react-native";
-import Animated, { FadeInDown, FadeIn } from "react-native-reanimated";
+import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import Colors from "@/constants/colors";
+import { useTheme } from "@/context/ThemeContext";
 import {
   MECHANIC_CATEGORIES,
   MechanicCategory,
@@ -23,8 +22,6 @@ import {
   searchMechanics,
   getAllMechanics,
 } from "@/data/mechanics";
-
-const C = Colors.dark;
 
 const DIFFICULTY_COLORS: Record<string, string> = {
   beginner: "#00D4FF",
@@ -52,13 +49,24 @@ function NodePill({ label, type }: { label: string; type: string }) {
   };
   const color = nodeColors[type] || "#333";
   return (
-    <View style={[styles.nodePill, { backgroundColor: color + "cc", borderColor: color }]}>
-      <Text style={styles.nodePillText} numberOfLines={1}>{label}</Text>
+    <View style={[nodePillStyle.pill, { backgroundColor: color + "cc", borderColor: color }]}>
+      <Text style={nodePillStyle.text} numberOfLines={1}>{label}</Text>
     </View>
   );
 }
 
-function MechanicCard({ mechanic, onPress, index }: { mechanic: Mechanic; onPress: () => void; index: number }) {
+const nodePillStyle = StyleSheet.create({
+  pill: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 5, borderWidth: 1, maxWidth: 130 },
+  text: { fontSize: 10, color: "#FFF", fontWeight: "600", fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace" },
+});
+
+function MechanicCard({ mechanic, onPress, index, C, styles }: {
+  mechanic: Mechanic;
+  onPress: () => void;
+  index: number;
+  C: typeof Colors.dark;
+  styles: any;
+}) {
   const diffColor = DIFFICULTY_COLORS[mechanic.difficulty] || C.tint;
   return (
     <Animated.View entering={FadeInDown.delay(index * 40).duration(300)}>
@@ -104,10 +112,14 @@ function CategoryChip({
   category,
   selected,
   onPress,
+  C,
+  styles,
 }: {
   category: MechanicCategory | null;
   selected: boolean;
   onPress: () => void;
+  C: typeof Colors.dark;
+  styles: any;
 }) {
   const color = category?.color ?? C.tint;
   return (
@@ -128,6 +140,8 @@ function CategoryChip({
 }
 
 export default function MechanicsScreen() {
+  const { colors: C } = useTheme();
+  const styles = useMemo(() => createStyles(C), [C]);
   const insets = useSafeAreaInsets();
   const isWeb = Platform.OS === "web";
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -312,6 +326,8 @@ export default function MechanicsScreen() {
               category={null}
               selected={selectedCategory === null}
               onPress={() => setSelectedCategory(null)}
+              C={C}
+              styles={styles}
             />
             {MECHANIC_CATEGORIES.map((cat) => (
               <CategoryChip
@@ -319,6 +335,8 @@ export default function MechanicsScreen() {
                 category={cat}
                 selected={selectedCategory === cat.id}
                 onPress={() => setSelectedCategory(cat.id === selectedCategory ? null : cat.id)}
+                C={C}
+                styles={styles}
               />
             ))}
           </ScrollView>
@@ -338,6 +356,8 @@ export default function MechanicsScreen() {
                 mechanic={mechanic}
                 index={idx}
                 onPress={() => setExpanded(mechanic.id)}
+                C={C}
+                styles={styles}
               />
             ))
           )}
@@ -347,377 +367,131 @@ export default function MechanicsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: C.background,
-  },
-  stickyHeader: {
-    backgroundColor: C.background,
-    paddingHorizontal: 16,
-    paddingBottom: 8,
-    gap: 10,
-  },
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  screenTitle: {
-    fontSize: 26,
-    fontWeight: "700",
-    color: C.text,
-    letterSpacing: -0.5,
-  },
-  screenSub: {
-    fontSize: 13,
-    color: C.textSecondary,
-    marginTop: 1,
-  },
-  countBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-    backgroundColor: C.tint + "15",
-    borderRadius: 20,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderWidth: 1,
-    borderColor: C.tint + "30",
-  },
-  countBadgeText: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: C.tint,
-  },
-  searchRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: C.backgroundSecondary,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 9,
-    borderWidth: 1,
-    borderColor: C.cardBorder,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 14,
-    color: C.text,
-    padding: 0,
-  },
-  chipsRow: {
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    gap: 8,
-    flexDirection: "row",
-  },
-  chip: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    borderWidth: 1,
-    backgroundColor: C.backgroundSecondary,
-  },
-  chipText: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: C.textSecondary,
-  },
-  mechanicCard: {
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: C.cardBorder,
-    gap: 8,
-    overflow: "hidden",
-  },
-  mechanicCardHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  mechanicMeta: {
-    flexDirection: "row",
-    gap: 6,
-    flexWrap: "wrap",
-  },
-  diffBadge: {
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderWidth: 1,
-  },
-  diffText: {
-    fontSize: 11,
-    fontWeight: "700",
-  },
-  categoryBadge: {
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    backgroundColor: "rgba(0,212,255,0.1)",
-    borderWidth: 1,
-    borderColor: "rgba(0,212,255,0.2)",
-  },
-  categoryText: {
-    fontSize: 11,
-    fontWeight: "600",
-    color: C.tint,
-  },
-  mechanicTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: C.text,
-    letterSpacing: -0.2,
-  },
-  mechanicDesc: {
-    fontSize: 13,
-    color: C.textSecondary,
-    lineHeight: 18,
-  },
-  nodesRow: {
-    flexDirection: "row",
-    gap: 6,
-    flexWrap: "wrap",
-  },
-  nodePill: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 5,
-    borderWidth: 1,
-    maxWidth: 130,
-  },
-  nodePillText: {
-    fontSize: 10,
-    color: "#FFF",
-    fontWeight: "600",
-    fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
-  },
-  moreNodes: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 5,
-    backgroundColor: C.backgroundSecondary,
-    borderWidth: 1,
-    borderColor: C.cardBorder,
-  },
-  moreNodesText: {
-    fontSize: 10,
-    color: C.textTertiary,
-    fontWeight: "600",
-  },
-  empty: {
-    alignItems: "center",
-    paddingVertical: 60,
-    gap: 8,
-  },
-  emptyText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: C.textSecondary,
-  },
-  emptySubText: {
-    fontSize: 13,
-    color: C.textTertiary,
-  },
-  backBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    marginBottom: 16,
-    alignSelf: "flex-start",
-    paddingVertical: 4,
-  },
-  backText: {
-    fontSize: 15,
-    color: C.tint,
-    fontWeight: "600",
-  },
-  detailHero: {
-    borderRadius: 16,
-    padding: 18,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: C.cardBorder,
-    gap: 8,
-  },
-  detailMeta: {
-    flexDirection: "row",
-    gap: 8,
-  },
-  detailTitle: {
-    fontSize: 22,
-    fontWeight: "700",
-    color: C.text,
-    letterSpacing: -0.4,
-  },
-  detailDesc: {
-    fontSize: 14,
-    color: C.textSecondary,
-    lineHeight: 21,
-  },
-  sectionLabel: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: C.textTertiary,
-    letterSpacing: 1,
-    marginBottom: 8,
-    marginTop: 4,
-  },
-  graphCard: {
-    backgroundColor: "#080D14",
-    borderRadius: 14,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: C.cardBorder,
-    marginBottom: 16,
-  },
-  graphRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 0,
-    paddingVertical: 4,
-  },
-  nodeBox: {
-    borderRadius: 8,
-    borderWidth: 1.5,
-    overflow: "hidden",
-    minWidth: 100,
-    maxWidth: 140,
-  },
-  nodeHeader: {
-    paddingHorizontal: 8,
-    paddingVertical: 5,
-  },
-  nodeHeaderText: {
-    fontSize: 10,
-    color: "#FFF",
-    fontWeight: "700",
-    fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
-  },
-  nodeBody: {
-    backgroundColor: "#111820",
-    paddingHorizontal: 8,
-    paddingVertical: 5,
-  },
-  nodeType: {
-    fontSize: 9,
-    fontWeight: "600",
-    letterSpacing: 0.5,
-  },
-  wire: {
-    width: 24,
-    height: 2,
-    backgroundColor: "rgba(255,255,255,0.2)",
-    alignSelf: "center",
-  },
-  stepsCard: {
-    backgroundColor: C.card,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: C.cardBorder,
-    marginBottom: 16,
-    overflow: "hidden",
-  },
-  stepRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 12,
-    padding: 14,
-  },
-  stepBorder: {
-    borderBottomWidth: 1,
-    borderBottomColor: C.cardBorder,
-  },
-  stepNum: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: C.tint + "20",
-    borderWidth: 1,
-    borderColor: C.tint + "40",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  stepNumText: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: C.tint,
-  },
-  stepNode: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: C.text,
-    fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
-    marginBottom: 3,
-  },
-  stepDesc: {
-    fontSize: 13,
-    color: C.textSecondary,
-    lineHeight: 18,
-  },
-  theoryCard: {
-    backgroundColor: C.card,
-    borderRadius: 14,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: C.cardBorder,
-    marginBottom: 16,
-  },
-  theoryText: {
-    fontSize: 14,
-    color: C.text,
-    lineHeight: 22,
-  },
-  tipsCard: {
-    backgroundColor: C.card,
-    borderRadius: 14,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: C.cardBorder,
-    marginBottom: 16,
-    gap: 10,
-  },
-  tipRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 10,
-  },
-  tipDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: C.warning,
-    marginTop: 6,
-  },
-  tipText: {
-    flex: 1,
-    fontSize: 13,
-    color: C.textSecondary,
-    lineHeight: 20,
-  },
-  tagsRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 6,
-    marginBottom: 8,
-  },
-  tag: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
-    backgroundColor: C.backgroundSecondary,
-    borderWidth: 1,
-    borderColor: C.cardBorder,
-  },
-  tagText: {
-    fontSize: 12,
-    color: C.textTertiary,
-    fontWeight: "500",
-  },
-});
+function createStyles(C: typeof Colors.dark) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: C.background },
+    stickyHeader: { backgroundColor: C.background, paddingHorizontal: 16, paddingBottom: 8, gap: 10 },
+    headerRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+    screenTitle: { fontSize: 26, fontWeight: "700", color: C.text, letterSpacing: -0.5 },
+    screenSub: { fontSize: 13, color: C.textSecondary, marginTop: 1 },
+    countBadge: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 5,
+      backgroundColor: C.tint + "15",
+      borderRadius: 20,
+      paddingHorizontal: 10,
+      paddingVertical: 5,
+      borderWidth: 1,
+      borderColor: C.tint + "30",
+    },
+    countBadgeText: { fontSize: 13, fontWeight: "700", color: C.tint },
+    searchRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: C.backgroundSecondary,
+      borderRadius: 12,
+      paddingHorizontal: 12,
+      paddingVertical: 9,
+      borderWidth: 1,
+      borderColor: C.cardBorder,
+    },
+    searchInput: { flex: 1, fontSize: 14, color: C.text, padding: 0 },
+    chipsRow: { paddingHorizontal: 16, paddingVertical: 6, gap: 8, flexDirection: "row" },
+    chip: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 5,
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 20,
+      borderWidth: 1,
+      backgroundColor: C.backgroundSecondary,
+    },
+    chipText: { fontSize: 12, fontWeight: "600", color: C.textSecondary },
+    mechanicCard: {
+      borderRadius: 14,
+      padding: 14,
+      marginBottom: 10,
+      borderWidth: 1,
+      borderColor: C.cardBorder,
+      gap: 8,
+      overflow: "hidden",
+    },
+    mechanicCardHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+    mechanicMeta: { flexDirection: "row", gap: 6, flexWrap: "wrap" },
+    diffBadge: { borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3, borderWidth: 1 },
+    diffText: { fontSize: 11, fontWeight: "700" },
+    categoryBadge: {
+      borderRadius: 6,
+      paddingHorizontal: 8,
+      paddingVertical: 3,
+      backgroundColor: "rgba(0,212,255,0.1)",
+      borderWidth: 1,
+      borderColor: "rgba(0,212,255,0.2)",
+    },
+    categoryText: { fontSize: 11, fontWeight: "600", color: C.tint },
+    mechanicTitle: { fontSize: 16, fontWeight: "700", color: "#E8ECF0", letterSpacing: -0.2 },
+    mechanicDesc: { fontSize: 13, color: "#8B9BB4", lineHeight: 18 },
+    nodesRow: { flexDirection: "row", gap: 6, flexWrap: "wrap" },
+    moreNodes: {
+      paddingHorizontal: 8,
+      paddingVertical: 3,
+      borderRadius: 5,
+      backgroundColor: C.backgroundSecondary,
+      borderWidth: 1,
+      borderColor: C.cardBorder,
+    },
+    moreNodesText: { fontSize: 10, color: C.textTertiary, fontWeight: "600" },
+    empty: { alignItems: "center", paddingVertical: 60, gap: 8 },
+    emptyText: { fontSize: 16, fontWeight: "600", color: C.textSecondary },
+    emptySubText: { fontSize: 13, color: C.textTertiary },
+    backBtn: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 16, alignSelf: "flex-start", paddingVertical: 4 },
+    backText: { fontSize: 15, color: C.tint, fontWeight: "600" },
+    detailHero: { borderRadius: 16, padding: 18, marginBottom: 16, borderWidth: 1, borderColor: C.cardBorder, gap: 8 },
+    detailMeta: { flexDirection: "row", gap: 8 },
+    detailTitle: { fontSize: 22, fontWeight: "700", color: C.text, letterSpacing: -0.4 },
+    detailDesc: { fontSize: 14, color: C.textSecondary, lineHeight: 21 },
+    sectionLabel: { fontSize: 11, fontWeight: "700", color: C.textTertiary, letterSpacing: 1, marginBottom: 8, marginTop: 4 },
+    graphCard: { backgroundColor: "#080D14", borderRadius: 14, padding: 14, borderWidth: 1, borderColor: C.cardBorder, marginBottom: 16 },
+    graphRow: { flexDirection: "row", alignItems: "center", gap: 0, paddingVertical: 4 },
+    nodeBox: { borderRadius: 8, borderWidth: 1.5, overflow: "hidden", minWidth: 100, maxWidth: 140 },
+    nodeHeader: { paddingHorizontal: 8, paddingVertical: 5 },
+    nodeHeaderText: { fontSize: 10, color: "#FFF", fontWeight: "700", fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace" },
+    nodeBody: { backgroundColor: "#111820", paddingHorizontal: 8, paddingVertical: 5 },
+    nodeType: { fontSize: 9, fontWeight: "600", letterSpacing: 0.5 },
+    wire: { width: 24, height: 2, backgroundColor: "rgba(255,255,255,0.2)", alignSelf: "center" },
+    stepsCard: {
+      backgroundColor: C.card,
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: C.cardBorder,
+      marginBottom: 16,
+      overflow: "hidden",
+    },
+    stepRow: { flexDirection: "row", alignItems: "flex-start", gap: 12, padding: 14 },
+    stepBorder: { borderBottomWidth: 1, borderBottomColor: C.cardBorder },
+    stepNum: {
+      width: 26,
+      height: 26,
+      borderRadius: 13,
+      backgroundColor: C.tint + "20",
+      borderWidth: 1,
+      borderColor: C.tint + "40",
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    stepNumText: { fontSize: 12, fontWeight: "700", color: C.tint },
+    stepNode: { fontSize: 13, fontWeight: "700", color: C.text, fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace", marginBottom: 3 },
+    stepDesc: { fontSize: 13, color: C.textSecondary, lineHeight: 18 },
+    theoryCard: { backgroundColor: C.card, borderRadius: 14, padding: 16, borderWidth: 1, borderColor: C.cardBorder, marginBottom: 16 },
+    theoryText: { fontSize: 14, color: C.text, lineHeight: 22 },
+    tipsCard: { backgroundColor: C.card, borderRadius: 14, padding: 16, borderWidth: 1, borderColor: C.cardBorder, marginBottom: 16, gap: 10 },
+    tipRow: { flexDirection: "row", alignItems: "flex-start", gap: 10 },
+    tipDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: C.warning, marginTop: 6 },
+    tipText: { flex: 1, fontSize: 13, color: C.textSecondary, lineHeight: 20 },
+    tagsRow: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginBottom: 8 },
+    tag: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, backgroundColor: C.backgroundSecondary, borderWidth: 1, borderColor: C.cardBorder },
+    tagText: { fontSize: 12, color: C.textTertiary, fontWeight: "500" },
+  });
+}

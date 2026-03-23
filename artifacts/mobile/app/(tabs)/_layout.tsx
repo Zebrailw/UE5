@@ -8,9 +8,7 @@ import React from "react";
 import { Platform, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import Colors from "@/constants/colors";
-
-const C = Colors.dark;
+import { useTheme } from "@/context/ThemeContext";
 
 function NativeTabLayout() {
   return (
@@ -52,6 +50,7 @@ function NativeTabLayout() {
 }
 
 function ClassicTabLayout() {
+  const { colors: C, isDark } = useTheme();
   const isIOS = Platform.OS === "ios";
   const isWeb = Platform.OS === "web";
   const insets = useSafeAreaInsets();
@@ -73,7 +72,7 @@ function ClassicTabLayout() {
         },
         tabBarBackground: () =>
           isIOS ? (
-            <BlurView intensity={80} tint="dark" style={StyleSheet.absoluteFill} />
+            <BlurView intensity={80} tint={isDark ? "dark" : "light"} style={StyleSheet.absoluteFill} />
           ) : isWeb ? (
             <View
               style={[

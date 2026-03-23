@@ -1,7 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   Platform,
   Pressable,
@@ -15,6 +15,7 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import Colors from "@/constants/colors";
+import { useTheme } from "@/context/ThemeContext";
 import { useProgress } from "@/context/ProgressContext";
 import {
   Difficulty,
@@ -22,8 +23,6 @@ import {
   getDifficultyColor,
   getDifficultyLabel,
 } from "@/data/curriculum";
-
-const C = Colors.dark;
 
 const DIFFICULTIES: (Difficulty | "all")[] = [
   "all",
@@ -59,6 +58,8 @@ function CategorySection({
   index: number;
   search: string;
 }) {
+  const { colors: C } = useTheme();
+  const styles = useMemo(() => createStyles(C), [C]);
   const { isLessonCompleted, isModuleUnlocked } = useProgress();
   const [collapsed, setCollapsed] = useState(false);
 
@@ -136,7 +137,7 @@ function CategorySection({
       </Pressable>
 
       {!collapsed &&
-        modules.map((mod, mi) => {
+        modules.map((mod) => {
           const unlocked = isModuleUnlocked(mod.id);
           const completedCount = mod.lessons.filter((l) =>
             isLessonCompleted(l.id)
@@ -208,7 +209,6 @@ function CategorySection({
                     key={lesson.id}
                     style={({ pressed }) => [
                       styles.lessonRow,
-                      done && styles.lessonRowDone,
                       pressed && unlocked && { opacity: 0.8 },
                     ]}
                     onPress={() =>
@@ -262,6 +262,8 @@ function CategorySection({
 }
 
 export default function LearnScreen() {
+  const { colors: C } = useTheme();
+  const styles = useMemo(() => createStyles(C), [C]);
   const insets = useSafeAreaInsets();
   const { getTotalLessonsCompleted } = useProgress();
   const [search, setSearch] = useState("");
@@ -363,221 +365,222 @@ export default function LearnScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.background },
-  scrollContent: { paddingHorizontal: 20 },
-  screenTitle: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 28,
-    color: C.text,
-    marginBottom: 4,
-  },
-  screenSubtitle: {
-    fontFamily: "Inter_400Regular",
-    fontSize: 14,
-    color: C.textSecondary,
-    marginBottom: 20,
-  },
-  searchBox: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: C.card,
-    borderRadius: 14,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    marginBottom: 14,
-    borderWidth: 1,
-    borderColor: C.cardBorder,
-    gap: 10,
-  },
-  searchInput: {
-    flex: 1,
-    fontFamily: "Inter_400Regular",
-    fontSize: 15,
-    color: C.text,
-  },
-  filterRow: {
-    gap: 8,
-    paddingRight: 20,
-    marginBottom: 20,
-  },
-  filterChip: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: C.card,
-    borderWidth: 1,
-    borderColor: C.cardBorder,
-  },
-  filterText: {
-    fontFamily: "Inter_500Medium",
-    fontSize: 13,
-    color: C.textSecondary,
-  },
-  categoryBlock: {
-    marginBottom: 20,
-    borderRadius: 20,
-    overflow: "hidden",
-    borderWidth: 1,
-    borderColor: C.cardBorder,
-    backgroundColor: C.card,
-  },
-  categoryHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 14,
-    padding: 18,
-    overflow: "hidden",
-  },
-  categoryIconCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 13,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-  },
-  categoryHeaderText: { flex: 1 },
-  categoryLabelRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginBottom: 4,
-  },
-  categoryLabel: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 16,
-  },
-  countBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 6,
-  },
-  countBadgeText: {
-    fontFamily: "Inter_600SemiBold",
-    fontSize: 11,
-  },
-  categoryDesc: {
-    fontFamily: "Inter_400Regular",
-    fontSize: 12,
-    color: C.textSecondary,
-    marginBottom: 8,
-  },
-  catProgressRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  catProgressTrack: {
-    flex: 1,
-    height: 4,
-    backgroundColor: C.backgroundTertiary,
-    borderRadius: 2,
-    overflow: "hidden",
-  },
-  catProgressFill: { height: "100%", borderRadius: 2 },
-  catProgressText: {
-    fontFamily: "Inter_500Medium",
-    fontSize: 11,
-    color: C.textSecondary,
-  },
-  moduleSection: {
-    padding: 16,
-    borderTopWidth: 1,
-    borderTopColor: C.separator,
-    overflow: "hidden",
-  },
-  moduleHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    marginBottom: 8,
-  },
-  moduleIconCircle: {
-    width: 38,
-    height: 38,
-    borderRadius: 10,
-    backgroundColor: C.backgroundTertiary,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-  },
-  moduleHeaderText: { flex: 1 },
-  moduleTitle: {
-    fontFamily: "Inter_600SemiBold",
-    fontSize: 15,
-    color: C.text,
-    marginBottom: 2,
-  },
-  moduleMeta: {
-    fontFamily: "Inter_400Regular",
-    fontSize: 12,
-    color: C.textSecondary,
-  },
-  xpReqBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    backgroundColor: C.warning + "22",
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  xpReqText: {
-    fontFamily: "Inter_600SemiBold",
-    fontSize: 12,
-    color: C.warning,
-  },
-  moduleDesc: {
-    fontFamily: "Inter_400Regular",
-    fontSize: 13,
-    color: C.textSecondary,
-    lineHeight: 18,
-    marginBottom: 8,
-  },
-  lessonRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    paddingVertical: 10,
-    borderTopWidth: 1,
-    borderTopColor: C.separator,
-  },
-  lessonRowDone: {},
-  lessonDot: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: C.backgroundTertiary,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: C.cardBorder,
-  },
-  lessonNum: {
-    fontFamily: "Inter_600SemiBold",
-    fontSize: 11,
-    color: C.textSecondary,
-  },
-  lessonContent: { flex: 1 },
-  lessonTitle: {
-    fontFamily: "Inter_500Medium",
-    fontSize: 14,
-    color: C.text,
-    marginBottom: 3,
-  },
-  lessonMeta: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-  lessonMetaText: {
-    fontFamily: "Inter_400Regular",
-    fontSize: 12,
-    color: C.textTertiary,
-    marginRight: 6,
-  },
-});
+function createStyles(C: typeof Colors.dark) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: C.background },
+    scrollContent: { paddingHorizontal: 20 },
+    screenTitle: {
+      fontFamily: "Inter_700Bold",
+      fontSize: 28,
+      color: C.text,
+      marginBottom: 4,
+    },
+    screenSubtitle: {
+      fontFamily: "Inter_400Regular",
+      fontSize: 14,
+      color: C.textSecondary,
+      marginBottom: 20,
+    },
+    searchBox: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: C.card,
+      borderRadius: 14,
+      paddingHorizontal: 14,
+      paddingVertical: 12,
+      marginBottom: 14,
+      borderWidth: 1,
+      borderColor: C.cardBorder,
+      gap: 10,
+    },
+    searchInput: {
+      flex: 1,
+      fontFamily: "Inter_400Regular",
+      fontSize: 15,
+      color: C.text,
+    },
+    filterRow: {
+      gap: 8,
+      paddingRight: 20,
+      marginBottom: 20,
+    },
+    filterChip: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+      paddingHorizontal: 14,
+      paddingVertical: 8,
+      borderRadius: 20,
+      backgroundColor: C.card,
+      borderWidth: 1,
+      borderColor: C.cardBorder,
+    },
+    filterText: {
+      fontFamily: "Inter_500Medium",
+      fontSize: 13,
+      color: C.textSecondary,
+    },
+    categoryBlock: {
+      marginBottom: 20,
+      borderRadius: 20,
+      overflow: "hidden",
+      borderWidth: 1,
+      borderColor: C.cardBorder,
+      backgroundColor: C.card,
+    },
+    categoryHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 14,
+      padding: 18,
+      overflow: "hidden",
+    },
+    categoryIconCircle: {
+      width: 44,
+      height: 44,
+      borderRadius: 13,
+      alignItems: "center",
+      justifyContent: "center",
+      borderWidth: 1,
+    },
+    categoryHeaderText: { flex: 1 },
+    categoryLabelRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+      marginBottom: 4,
+    },
+    categoryLabel: {
+      fontFamily: "Inter_700Bold",
+      fontSize: 16,
+    },
+    countBadge: {
+      paddingHorizontal: 8,
+      paddingVertical: 2,
+      borderRadius: 6,
+    },
+    countBadgeText: {
+      fontFamily: "Inter_600SemiBold",
+      fontSize: 11,
+    },
+    categoryDesc: {
+      fontFamily: "Inter_400Regular",
+      fontSize: 12,
+      color: C.textSecondary,
+      marginBottom: 8,
+    },
+    catProgressRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+    },
+    catProgressTrack: {
+      flex: 1,
+      height: 4,
+      backgroundColor: C.backgroundTertiary,
+      borderRadius: 2,
+      overflow: "hidden",
+    },
+    catProgressFill: { height: "100%", borderRadius: 2 },
+    catProgressText: {
+      fontFamily: "Inter_500Medium",
+      fontSize: 11,
+      color: C.textSecondary,
+    },
+    moduleSection: {
+      padding: 16,
+      borderTopWidth: 1,
+      borderTopColor: C.separator,
+      overflow: "hidden",
+    },
+    moduleHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+      marginBottom: 8,
+    },
+    moduleIconCircle: {
+      width: 38,
+      height: 38,
+      borderRadius: 10,
+      backgroundColor: C.backgroundTertiary,
+      alignItems: "center",
+      justifyContent: "center",
+      borderWidth: 1,
+    },
+    moduleHeaderText: { flex: 1 },
+    moduleTitle: {
+      fontFamily: "Inter_600SemiBold",
+      fontSize: 15,
+      color: C.text,
+      marginBottom: 2,
+    },
+    moduleMeta: {
+      fontFamily: "Inter_400Regular",
+      fontSize: 12,
+      color: C.textSecondary,
+    },
+    xpReqBadge: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 4,
+      backgroundColor: C.warning + "22",
+      borderRadius: 8,
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+    },
+    xpReqText: {
+      fontFamily: "Inter_600SemiBold",
+      fontSize: 12,
+      color: C.warning,
+    },
+    moduleDesc: {
+      fontFamily: "Inter_400Regular",
+      fontSize: 13,
+      color: C.textSecondary,
+      lineHeight: 18,
+      marginBottom: 8,
+    },
+    lessonRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+      paddingVertical: 10,
+      borderTopWidth: 1,
+      borderTopColor: C.separator,
+    },
+    lessonDot: {
+      width: 26,
+      height: 26,
+      borderRadius: 13,
+      backgroundColor: C.backgroundTertiary,
+      alignItems: "center",
+      justifyContent: "center",
+      borderWidth: 1,
+      borderColor: C.cardBorder,
+    },
+    lessonNum: {
+      fontFamily: "Inter_600SemiBold",
+      fontSize: 11,
+      color: C.textSecondary,
+    },
+    lessonContent: { flex: 1 },
+    lessonTitle: {
+      fontFamily: "Inter_500Medium",
+      fontSize: 14,
+      color: C.text,
+      marginBottom: 3,
+    },
+    lessonMeta: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 4,
+    },
+    lessonMetaText: {
+      fontFamily: "Inter_400Regular",
+      fontSize: 12,
+      color: C.textTertiary,
+      marginRight: 6,
+    },
+  });
+}

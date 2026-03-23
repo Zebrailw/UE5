@@ -2,7 +2,7 @@ import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, useLocalSearchParams } from "expo-router";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   Platform,
   Pressable,
@@ -20,10 +20,9 @@ import Animated, {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import Colors from "@/constants/colors";
+import { useTheme } from "@/context/ThemeContext";
 import { useProgress } from "@/context/ProgressContext";
 import { MODULES } from "@/data/curriculum";
-
-const C = Colors.dark;
 
 interface Answer {
   questionId: string;
@@ -32,6 +31,8 @@ interface Answer {
 }
 
 export default function QuizScreen() {
+  const { colors: C } = useTheme();
+  const styles = useMemo(() => createStyles(C), [C]);
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
   const { completeLesson } = useProgress();
@@ -51,9 +52,9 @@ export default function QuizScreen() {
   if (!lesson || !mod) {
     return (
       <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>Quiz not found</Text>
+        <Text style={styles.errorText}>Квиз не найден</Text>
         <Pressable onPress={() => router.back()}>
-          <Text style={styles.backLink}>Go back</Text>
+          <Text style={styles.backLink}>Назад</Text>
         </Pressable>
       </View>
     );
@@ -142,24 +143,24 @@ export default function QuizScreen() {
               }]}>
                 {scorePercent}%
               </Text>
-              <Text style={styles.scoreLabel}>Score</Text>
+              <Text style={styles.scoreLabel}>Результат</Text>
             </View>
             <Text style={styles.resultTitle}>
-              {isPerfect ? "Perfect!" : isPassing ? "Well done!" : "Keep practicing"}
+              {isPerfect ? "Отлично!" : isPassing ? "Молодец!" : "Продолжай тренироваться"}
             </Text>
             <Text style={styles.resultSubtitle}>
-              {score} out of {questions.length} correct
+              {score} из {questions.length} правильных
             </Text>
             {isPerfect && (
               <View style={styles.xpBonusRow}>
                 <Feather name="zap" size={15} color={C.warning} />
-                <Text style={styles.xpBonusText}>+{lesson.xpReward} XP earned!</Text>
+                <Text style={styles.xpBonusText}>+{lesson.xpReward} XP получено!</Text>
               </View>
             )}
           </Animated.View>
 
           <Animated.View entering={FadeInDown.delay(300)}>
-            <Text style={styles.reviewTitle}>Question Review</Text>
+            <Text style={styles.reviewTitle}>Разбор вопросов</Text>
             {questions.map((q, i) => {
               const ans = answers.find((a) => a.questionId === q.id);
               const isCorrect = ans?.isCorrect;
@@ -171,17 +172,17 @@ export default function QuizScreen() {
                       size={16}
                       color={isCorrect ? C.success : C.error}
                     />
-                    <Text style={styles.reviewQ}>Q{i + 1}: {q.question}</Text>
+                    <Text style={styles.reviewQ}>В{i + 1}: {q.question}</Text>
                   </View>
                   <View style={[styles.reviewAnswer, { backgroundColor: C.success + "15" }]}>
-                    <Text style={styles.reviewAnswerLabel}>Correct: </Text>
+                    <Text style={styles.reviewAnswerLabel}>Правильно: </Text>
                     <Text style={[styles.reviewAnswerText, { color: C.success }]}>
                       {q.options[q.correctIndex]}
                     </Text>
                   </View>
                   {!isCorrect && ans && (
                     <View style={[styles.reviewAnswer, { backgroundColor: C.error + "15" }]}>
-                      <Text style={styles.reviewAnswerLabel}>Your answer: </Text>
+                      <Text style={styles.reviewAnswerLabel}>Твой ответ: </Text>
                       <Text style={[styles.reviewAnswerText, { color: C.error }]}>
                         {q.options[ans.selectedIndex]}
                       </Text>
@@ -205,13 +206,13 @@ export default function QuizScreen() {
               }}
             >
               <Feather name="refresh-cw" size={16} color={C.textSecondary} />
-              <Text style={styles.retakeBtnText}>Retake Quiz</Text>
+              <Text style={styles.retakeBtnText}>Пройти снова</Text>
             </Pressable>
             <Pressable
               style={({ pressed }) => [styles.doneBtn, { backgroundColor: mod.color }, pressed && { opacity: 0.9 }]}
               onPress={() => router.back()}
             >
-              <Text style={styles.doneBtnText}>Back to Lesson</Text>
+              <Text style={styles.doneBtnText}>К уроку</Text>
               <Feather name="arrow-right" size={16} color={C.background} />
             </Pressable>
           </Animated.View>
@@ -255,7 +256,7 @@ export default function QuizScreen() {
         <Animated.View key={currentIndex} entering={FadeInUp.duration(300)} style={styles.questionCard}>
           <View style={[styles.qNumBadge, { backgroundColor: mod.color + "22" }]}>
             <Text style={[styles.qNumText, { color: mod.color }]}>
-              Question {currentIndex + 1}
+              Вопрос {currentIndex + 1}
             </Text>
           </View>
           <Text style={styles.questionText}>{currentQ.question}</Text>
@@ -288,7 +289,7 @@ export default function QuizScreen() {
                       ? C.error
                       : C.textSecondary,
                 }]}>
-                  {["A", "B", "C", "D"][idx]}
+                  {["А", "Б", "В", "Г"][idx]}
                 </Text>
               </View>
               <Text style={getOptionTextStyle(idx)}>{opt}</Text>
@@ -314,7 +315,7 @@ export default function QuizScreen() {
                 styles.explanationTitle,
                 { color: answers[answers.length - 1]?.isCorrect ? C.success : C.warning },
               ]}>
-                {answers[answers.length - 1]?.isCorrect ? "Correct!" : "Explanation"}
+                {answers[answers.length - 1]?.isCorrect ? "Правильно!" : "Объяснение"}
               </Text>
             </View>
             <Text style={styles.explanationText}>{currentQ.explanation}</Text>
@@ -328,7 +329,7 @@ export default function QuizScreen() {
               onPress={handleNext}
             >
               <Text style={styles.nextBtnText}>
-                {currentIndex < questions.length - 1 ? "Next Question" : "Finish Quiz"}
+                {currentIndex < questions.length - 1 ? "Следующий вопрос" : "Завершить квиз"}
               </Text>
               <Feather
                 name={currentIndex < questions.length - 1 ? "arrow-right" : "check"}
@@ -343,349 +344,220 @@ export default function QuizScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.background },
-  errorContainer: {
-    flex: 1,
-    backgroundColor: C.background,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  errorText: { fontFamily: "Inter_400Regular", color: C.textSecondary, fontSize: 16 },
-  backLink: { fontFamily: "Inter_500Medium", color: C.tint, fontSize: 14, marginTop: 12 },
-  quizHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: C.cardBorder,
-  },
-  backBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 10,
-    backgroundColor: C.card,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: C.cardBorder,
-  },
-  progressInfo: { flex: 1, gap: 6 },
-  progressText: {
-    fontFamily: "Inter_500Medium",
-    fontSize: 12,
-    color: C.textSecondary,
-    textAlign: "center",
-  },
-  progressTrack: {
-    height: 6,
-    backgroundColor: C.backgroundTertiary,
-    borderRadius: 3,
-    overflow: "hidden",
-  },
-  progressFill: {
-    height: "100%",
-    borderRadius: 3,
-  },
-  scoreInfo: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    backgroundColor: C.success + "22",
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-  },
-  scoreText: { fontFamily: "Inter_700Bold", fontSize: 14, color: C.success },
-  quizScroll: { paddingHorizontal: 20, paddingTop: 20 },
-  questionCard: {
-    backgroundColor: C.card,
-    borderRadius: 20,
-    padding: 22,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: C.cardBorder,
-  },
-  qNumBadge: {
-    alignSelf: "flex-start",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
-    marginBottom: 14,
-  },
-  qNumText: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
-  questionText: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 19,
-    color: C.text,
-    lineHeight: 28,
-  },
-  option: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 14,
-    backgroundColor: C.card,
-    borderRadius: 14,
-    padding: 16,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: C.cardBorder,
-  },
-  optionSelected: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 14,
-    backgroundColor: C.card,
-    borderRadius: 14,
-    padding: 16,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: C.tint,
-  },
-  optionCorrect: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 14,
-    backgroundColor: C.success + "18",
-    borderRadius: 14,
-    padding: 16,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: C.success + "66",
-  },
-  optionWrong: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 14,
-    backgroundColor: C.error + "18",
-    borderRadius: 14,
-    padding: 16,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: C.error + "66",
-  },
-  optionLetter: {
-    width: 32,
-    height: 32,
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  optionLetterText: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 14,
-  },
-  optionText: {
-    flex: 1,
-    fontFamily: "Inter_500Medium",
-    fontSize: 15,
-    color: C.text,
-    lineHeight: 22,
-  },
-  optionTextCorrect: {
-    flex: 1,
-    fontFamily: "Inter_600SemiBold",
-    fontSize: 15,
-    color: C.success,
-    lineHeight: 22,
-  },
-  optionTextWrong: {
-    flex: 1,
-    fontFamily: "Inter_500Medium",
-    fontSize: 15,
-    color: C.error,
-    lineHeight: 22,
-  },
-  explanationCard: {
-    backgroundColor: C.card,
-    borderRadius: 14,
-    padding: 16,
-    marginBottom: 14,
-    borderWidth: 1,
-    borderColor: C.cardBorder,
-  },
-  explanationHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginBottom: 8,
-  },
-  explanationTitle: {
-    fontFamily: "Inter_600SemiBold",
-    fontSize: 14,
-  },
-  explanationText: {
-    fontFamily: "Inter_400Regular",
-    fontSize: 14,
-    color: C.textSecondary,
-    lineHeight: 22,
-  },
-  nextBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 10,
-    borderRadius: 16,
-    paddingVertical: 16,
-    marginBottom: 10,
-  },
-  nextBtnText: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 16,
-    color: C.background,
-  },
-  resultScroll: {
-    paddingHorizontal: 20,
-    paddingTop: 10,
-    alignItems: "center",
-  },
-  resultHero: {
-    width: "100%",
-    backgroundColor: C.card,
-    borderRadius: 24,
-    padding: 28,
-    alignItems: "center",
-    marginBottom: 24,
-    borderWidth: 1,
-    borderColor: C.cardBorder,
-    overflow: "hidden",
-  },
-  scoreCircle: {
-    width: 110,
-    height: 110,
-    borderRadius: 55,
-    borderWidth: 4,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 18,
-  },
-  scorePercent: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 30,
-  },
-  scoreLabel: {
-    fontFamily: "Inter_400Regular",
-    fontSize: 12,
-    color: C.textSecondary,
-  },
-  resultTitle: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 24,
-    color: C.text,
-    marginBottom: 6,
-  },
-  resultSubtitle: {
-    fontFamily: "Inter_400Regular",
-    fontSize: 15,
-    color: C.textSecondary,
-    marginBottom: 10,
-  },
-  xpBonusRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    backgroundColor: C.warning + "22",
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-  },
-  xpBonusText: {
-    fontFamily: "Inter_600SemiBold",
-    fontSize: 14,
-    color: C.warning,
-  },
-  reviewTitle: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 18,
-    color: C.text,
-    marginBottom: 14,
-    alignSelf: "flex-start",
-    width: "100%",
-  },
-  reviewCard: {
-    backgroundColor: C.card,
-    borderRadius: 14,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: C.cardBorder,
-    borderLeftWidth: 3,
-    width: "100%",
-  },
-  reviewHeader: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 10,
-    marginBottom: 10,
-  },
-  reviewQ: {
-    flex: 1,
-    fontFamily: "Inter_600SemiBold",
-    fontSize: 14,
-    color: C.text,
-    lineHeight: 20,
-  },
-  reviewAnswer: {
-    flexDirection: "row",
-    borderRadius: 8,
-    padding: 10,
-    marginBottom: 6,
-    flexWrap: "wrap",
-  },
-  reviewAnswerLabel: {
-    fontFamily: "Inter_600SemiBold",
-    fontSize: 13,
-    color: C.textSecondary,
-  },
-  reviewAnswerText: {
-    fontFamily: "Inter_500Medium",
-    fontSize: 13,
-    flex: 1,
-  },
-  reviewExplanation: {
-    fontFamily: "Inter_400Regular",
-    fontSize: 13,
-    color: C.textSecondary,
-    lineHeight: 19,
-    marginTop: 6,
-  },
-  resultActions: {
-    flexDirection: "row",
-    gap: 12,
-    width: "100%",
-    marginTop: 8,
-  },
-  retakeBtn: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    paddingVertical: 16,
-    borderRadius: 14,
-    backgroundColor: C.card,
-    borderWidth: 1,
-    borderColor: C.cardBorder,
-  },
-  retakeBtnText: {
-    fontFamily: "Inter_600SemiBold",
-    fontSize: 14,
-    color: C.textSecondary,
-  },
-  doneBtn: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    paddingVertical: 16,
-    borderRadius: 14,
-  },
-  doneBtnText: {
-    fontFamily: "Inter_600SemiBold",
-    fontSize: 14,
-    color: C.background,
-  },
-});
+function createStyles(C: typeof Colors.dark) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: C.background },
+    errorContainer: {
+      flex: 1,
+      backgroundColor: C.background,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    errorText: { fontFamily: "Inter_400Regular", color: C.textSecondary, fontSize: 16 },
+    backLink: { fontFamily: "Inter_500Medium", color: C.tint, fontSize: 14, marginTop: 12 },
+    quizHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: C.cardBorder,
+    },
+    backBtn: {
+      width: 38,
+      height: 38,
+      borderRadius: 10,
+      backgroundColor: C.card,
+      alignItems: "center",
+      justifyContent: "center",
+      borderWidth: 1,
+      borderColor: C.cardBorder,
+    },
+    progressInfo: { flex: 1, gap: 6 },
+    progressText: { fontFamily: "Inter_500Medium", fontSize: 12, color: C.textSecondary, textAlign: "center" },
+    progressTrack: { height: 6, backgroundColor: C.backgroundTertiary, borderRadius: 3, overflow: "hidden" },
+    progressFill: { height: "100%", borderRadius: 3 },
+    scoreInfo: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 4,
+      backgroundColor: C.success + "22",
+      borderRadius: 8,
+      paddingHorizontal: 10,
+      paddingVertical: 6,
+    },
+    scoreText: { fontFamily: "Inter_700Bold", fontSize: 14, color: C.success },
+    quizScroll: { paddingHorizontal: 20, paddingTop: 20 },
+    questionCard: {
+      backgroundColor: C.card,
+      borderRadius: 20,
+      padding: 22,
+      marginBottom: 20,
+      borderWidth: 1,
+      borderColor: C.cardBorder,
+    },
+    qNumBadge: { alignSelf: "flex-start", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, marginBottom: 14 },
+    qNumText: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
+    questionText: { fontFamily: "Inter_700Bold", fontSize: 19, color: C.text, lineHeight: 28 },
+    option: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 14,
+      backgroundColor: C.card,
+      borderRadius: 14,
+      padding: 16,
+      marginBottom: 10,
+      borderWidth: 1,
+      borderColor: C.cardBorder,
+    },
+    optionSelected: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 14,
+      backgroundColor: C.card,
+      borderRadius: 14,
+      padding: 16,
+      marginBottom: 10,
+      borderWidth: 1,
+      borderColor: C.tint,
+    },
+    optionCorrect: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 14,
+      backgroundColor: C.success + "18",
+      borderRadius: 14,
+      padding: 16,
+      marginBottom: 10,
+      borderWidth: 1,
+      borderColor: C.success + "66",
+    },
+    optionWrong: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 14,
+      backgroundColor: C.error + "18",
+      borderRadius: 14,
+      padding: 16,
+      marginBottom: 10,
+      borderWidth: 1,
+      borderColor: C.error + "66",
+    },
+    optionLetter: { width: 32, height: 32, borderRadius: 10, alignItems: "center", justifyContent: "center" },
+    optionLetterText: { fontFamily: "Inter_700Bold", fontSize: 14 },
+    optionText: { flex: 1, fontFamily: "Inter_500Medium", fontSize: 15, color: C.text, lineHeight: 22 },
+    optionTextCorrect: { flex: 1, fontFamily: "Inter_600SemiBold", fontSize: 15, color: C.success, lineHeight: 22 },
+    optionTextWrong: { flex: 1, fontFamily: "Inter_500Medium", fontSize: 15, color: C.error, lineHeight: 22 },
+    explanationCard: {
+      backgroundColor: C.card,
+      borderRadius: 14,
+      padding: 16,
+      marginBottom: 14,
+      borderWidth: 1,
+      borderColor: C.cardBorder,
+    },
+    explanationHeader: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 8 },
+    explanationTitle: { fontFamily: "Inter_600SemiBold", fontSize: 14 },
+    explanationText: { fontFamily: "Inter_400Regular", fontSize: 14, color: C.textSecondary, lineHeight: 22 },
+    nextBtn: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 10,
+      borderRadius: 16,
+      paddingVertical: 16,
+      marginBottom: 10,
+    },
+    nextBtnText: { fontFamily: "Inter_700Bold", fontSize: 16, color: C.background },
+    resultScroll: { paddingHorizontal: 20, paddingTop: 10, alignItems: "center" },
+    resultHero: {
+      width: "100%",
+      backgroundColor: C.card,
+      borderRadius: 24,
+      padding: 28,
+      alignItems: "center",
+      marginBottom: 24,
+      borderWidth: 1,
+      borderColor: C.cardBorder,
+      overflow: "hidden",
+    },
+    scoreCircle: {
+      width: 110,
+      height: 110,
+      borderRadius: 55,
+      borderWidth: 4,
+      alignItems: "center",
+      justifyContent: "center",
+      marginBottom: 18,
+    },
+    scorePercent: { fontFamily: "Inter_700Bold", fontSize: 30 },
+    scoreLabel: { fontFamily: "Inter_400Regular", fontSize: 12, color: C.textSecondary },
+    resultTitle: { fontFamily: "Inter_700Bold", fontSize: 24, color: C.text, marginBottom: 6 },
+    resultSubtitle: { fontFamily: "Inter_400Regular", fontSize: 15, color: C.textSecondary, marginBottom: 10 },
+    xpBonusRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+      backgroundColor: C.warning + "22",
+      borderRadius: 10,
+      paddingHorizontal: 14,
+      paddingVertical: 8,
+    },
+    xpBonusText: { fontFamily: "Inter_600SemiBold", fontSize: 14, color: C.warning },
+    reviewTitle: {
+      fontFamily: "Inter_700Bold",
+      fontSize: 18,
+      color: C.text,
+      marginBottom: 14,
+      alignSelf: "flex-start",
+      width: "100%",
+    },
+    reviewCard: {
+      backgroundColor: C.card,
+      borderRadius: 14,
+      padding: 16,
+      marginBottom: 12,
+      borderWidth: 1,
+      borderColor: C.cardBorder,
+      borderLeftWidth: 3,
+      width: "100%",
+    },
+    reviewHeader: { flexDirection: "row", alignItems: "flex-start", gap: 10, marginBottom: 10 },
+    reviewQ: { flex: 1, fontFamily: "Inter_600SemiBold", fontSize: 14, color: C.text, lineHeight: 20 },
+    reviewAnswer: { flexDirection: "row", borderRadius: 8, padding: 10, marginBottom: 6, flexWrap: "wrap" },
+    reviewAnswerLabel: { fontFamily: "Inter_600SemiBold", fontSize: 13, color: C.textSecondary },
+    reviewAnswerText: { fontFamily: "Inter_500Medium", fontSize: 13, flex: 1 },
+    reviewExplanation: {
+      fontFamily: "Inter_400Regular",
+      fontSize: 13,
+      color: C.textSecondary,
+      lineHeight: 19,
+      marginTop: 6,
+    },
+    resultActions: { flexDirection: "row", gap: 12, width: "100%", marginTop: 8 },
+    retakeBtn: {
+      flex: 1,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 8,
+      paddingVertical: 16,
+      borderRadius: 14,
+      backgroundColor: C.card,
+      borderWidth: 1,
+      borderColor: C.cardBorder,
+    },
+    retakeBtnText: { fontFamily: "Inter_600SemiBold", fontSize: 14, color: C.textSecondary },
+    doneBtn: {
+      flex: 1,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 8,
+      paddingVertical: 16,
+      borderRadius: 14,
+    },
+    doneBtnText: { fontFamily: "Inter_600SemiBold", fontSize: 14, color: C.background },
+  });
+}

@@ -14,16 +14,18 @@ import {
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import Colors from "@/constants/colors";
+import { useTheme } from "@/context/ThemeContext";
 import { useProgress } from "@/context/ProgressContext";
 import { MODULES, getDifficultyColor, getDifficultyLabel } from "@/data/curriculum";
+import Colors from "@/constants/colors";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
-const C = Colors.dark;
 
 function XPBar() {
+  const { colors: C } = useTheme();
   const { xp, level, getLevelProgress } = useProgress();
   const progress = getLevelProgress();
+  const styles = useMemo(() => createStyles(C), [C]);
 
   return (
     <View style={styles.xpBar}>
@@ -46,6 +48,8 @@ function XPBar() {
 }
 
 function StatCard({ icon, value, label, color }: { icon: string; value: string; label: string; color: string }) {
+  const { colors: C } = useTheme();
+  const styles = useMemo(() => createStyles(C), [C]);
   return (
     <View style={[styles.statCard, { borderColor: color + "33" }]}>
       <Feather name={icon as any} size={18} color={color} />
@@ -56,6 +60,8 @@ function StatCard({ icon, value, label, color }: { icon: string; value: string; 
 }
 
 function ContinueLearningCard() {
+  const { colors: C } = useTheme();
+  const styles = useMemo(() => createStyles(C), [C]);
   const { isLessonCompleted, isModuleUnlocked } = useProgress();
 
   const nextLesson = useMemo(() => {
@@ -125,6 +131,8 @@ function ContinueLearningCard() {
 }
 
 function ModuleCard({ mod, index }: { mod: typeof MODULES[0]; index: number }) {
+  const { colors: C } = useTheme();
+  const styles = useMemo(() => createStyles(C), [C]);
   const { isModuleUnlocked, isLessonCompleted } = useProgress();
   const unlocked = isModuleUnlocked(mod.id);
   const completedCount = mod.lessons.filter((l) => isLessonCompleted(l.id)).length;
@@ -187,6 +195,8 @@ function ModuleCard({ mod, index }: { mod: typeof MODULES[0]; index: number }) {
 }
 
 export default function HomeScreen() {
+  const { colors: C } = useTheme();
+  const styles = useMemo(() => createStyles(C), [C]);
   const insets = useSafeAreaInsets();
   const { streak, dailyGoalCompleted, getTotalLessonsCompleted, xp } = useProgress();
   const totalCompleted = getTotalLessonsCompleted();
@@ -254,170 +264,172 @@ export default function HomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.background },
-  scroll: { flex: 1 },
-  scrollContent: { paddingHorizontal: 20 },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: 24,
-  },
-  headerGreeting: {
-    fontFamily: "Inter_400Regular",
-    fontSize: 14,
-    color: C.textSecondary,
-    marginBottom: 2,
-  },
-  headerTitle: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 28,
-    color: C.text,
-    lineHeight: 34,
-  },
-  headerRight: { flexDirection: "row", gap: 10, alignItems: "center", marginTop: 4 },
-  goalBadge: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: C.success + "22",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  streakBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: C.warning + "22",
-    borderRadius: 14,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    gap: 4,
-  },
-  streakText: { fontFamily: "Inter_700Bold", fontSize: 14, color: C.warning },
-  xpBar: {
-    backgroundColor: C.card,
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: C.cardBorder,
-  },
-  xpBarHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 10,
-  },
-  levelBadge: {
-    backgroundColor: C.tint + "22",
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-  },
-  levelText: { fontFamily: "Inter_700Bold", fontSize: 13, color: C.tint },
-  xpText: { fontFamily: "Inter_600SemiBold", fontSize: 14, color: C.text },
-  xpTrack: {
-    height: 8,
-    backgroundColor: C.backgroundTertiary,
-    borderRadius: 4,
-    overflow: "hidden",
-  },
-  xpFill: { height: "100%", backgroundColor: C.tint, borderRadius: 4 },
-  xpSubText: { fontFamily: "Inter_400Regular", fontSize: 12, color: C.textSecondary, marginTop: 6 },
-  statsRow: { flexDirection: "row", gap: 12, marginBottom: 24 },
-  statCard: {
-    flex: 1,
-    backgroundColor: C.card,
-    borderRadius: 14,
-    padding: 14,
-    alignItems: "center",
-    gap: 6,
-    borderWidth: 1,
-  },
-  statValue: { fontFamily: "Inter_700Bold", fontSize: 16 },
-  statLabel: { fontFamily: "Inter_400Regular", fontSize: 10, color: C.textSecondary, textAlign: "center" },
-  sectionTitle: { fontFamily: "Inter_700Bold", fontSize: 18, color: C.text, marginBottom: 14 },
-  sectionHeaderRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 14,
-    marginTop: 8,
-  },
-  seeAll: { fontFamily: "Inter_500Medium", fontSize: 14, color: C.tint },
-  continueCard: {
-    backgroundColor: C.card,
-    borderRadius: 20,
-    padding: 20,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: C.cardBorder,
-    overflow: "hidden",
-  },
-  continueHeader: { flexDirection: "row", alignItems: "center", marginBottom: 10, gap: 8 },
-  continueDot: { width: 8, height: 8, borderRadius: 4 },
-  continueModule: { fontFamily: "Inter_600SemiBold", fontSize: 12, flex: 1 },
-  diffBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
-  diffText: { fontFamily: "Inter_600SemiBold", fontSize: 11 },
-  continueTitle: { fontFamily: "Inter_700Bold", fontSize: 17, color: C.text, marginBottom: 6 },
-  continueSubtitle: {
-    fontFamily: "Inter_400Regular",
-    fontSize: 14,
-    color: C.textSecondary,
-    lineHeight: 20,
-    marginBottom: 16,
-  },
-  continueFooter: { flexDirection: "row", alignItems: "center", gap: 12 },
-  continueInfo: { flexDirection: "row", alignItems: "center", gap: 4 },
-  continueInfoText: { fontFamily: "Inter_400Regular", fontSize: 13, color: C.textSecondary },
-  continueStartBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: C.tint,
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    gap: 6,
-    marginLeft: "auto",
-  },
-  continueStartText: { fontFamily: "Inter_600SemiBold", fontSize: 13, color: C.background },
-  moduleCard: {
-    flexDirection: "row",
-    backgroundColor: C.card,
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: C.cardBorder,
-    overflow: "hidden",
-    alignItems: "center",
-    gap: 14,
-  },
-  moduleCardLocked: { opacity: 0.55 },
-  moduleCardLeft: {},
-  moduleIconBox: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    backgroundColor: C.backgroundTertiary,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-  },
-  moduleCardContent: { flex: 1 },
-  moduleCardHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 4,
-  },
-  moduleTitle: { fontFamily: "Inter_600SemiBold", fontSize: 15, color: C.text, flex: 1, marginRight: 8 },
-  moduleTitleLocked: { color: C.textTertiary },
-  moduleDesc: { fontFamily: "Inter_400Regular", fontSize: 12, color: C.textSecondary, marginBottom: 8 },
-  moduleProgressRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  moduleTrack: { flex: 1, height: 4, backgroundColor: C.backgroundTertiary, borderRadius: 2, overflow: "hidden" },
-  moduleFill: { height: "100%", borderRadius: 2 },
-  modulePct: { fontFamily: "Inter_500Medium", fontSize: 11, color: C.textSecondary },
-  moduleLocked: { fontFamily: "Inter_400Regular", fontSize: 11, color: C.textTertiary },
-});
+function createStyles(C: typeof Colors.dark) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: C.background },
+    scroll: { flex: 1 },
+    scrollContent: { paddingHorizontal: 20 },
+    header: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "flex-start",
+      marginBottom: 24,
+    },
+    headerGreeting: {
+      fontFamily: "Inter_400Regular",
+      fontSize: 14,
+      color: C.textSecondary,
+      marginBottom: 2,
+    },
+    headerTitle: {
+      fontFamily: "Inter_700Bold",
+      fontSize: 28,
+      color: C.text,
+      lineHeight: 34,
+    },
+    headerRight: { flexDirection: "row", gap: 10, alignItems: "center", marginTop: 4 },
+    goalBadge: {
+      width: 28,
+      height: 28,
+      borderRadius: 14,
+      backgroundColor: C.success + "22",
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    streakBadge: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: C.warning + "22",
+      borderRadius: 14,
+      paddingHorizontal: 10,
+      paddingVertical: 6,
+      gap: 4,
+    },
+    streakText: { fontFamily: "Inter_700Bold", fontSize: 14, color: C.warning },
+    xpBar: {
+      backgroundColor: C.card,
+      borderRadius: 16,
+      padding: 16,
+      marginBottom: 16,
+      borderWidth: 1,
+      borderColor: C.cardBorder,
+    },
+    xpBarHeader: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 10,
+    },
+    levelBadge: {
+      backgroundColor: C.tint + "22",
+      borderRadius: 8,
+      paddingHorizontal: 10,
+      paddingVertical: 4,
+    },
+    levelText: { fontFamily: "Inter_700Bold", fontSize: 13, color: C.tint },
+    xpText: { fontFamily: "Inter_600SemiBold", fontSize: 14, color: C.text },
+    xpTrack: {
+      height: 8,
+      backgroundColor: C.backgroundTertiary,
+      borderRadius: 4,
+      overflow: "hidden",
+    },
+    xpFill: { height: "100%", backgroundColor: C.tint, borderRadius: 4 },
+    xpSubText: { fontFamily: "Inter_400Regular", fontSize: 12, color: C.textSecondary, marginTop: 6 },
+    statsRow: { flexDirection: "row", gap: 12, marginBottom: 24 },
+    statCard: {
+      flex: 1,
+      backgroundColor: C.card,
+      borderRadius: 14,
+      padding: 14,
+      alignItems: "center",
+      gap: 6,
+      borderWidth: 1,
+    },
+    statValue: { fontFamily: "Inter_700Bold", fontSize: 16 },
+    statLabel: { fontFamily: "Inter_400Regular", fontSize: 10, color: C.textSecondary, textAlign: "center" },
+    sectionTitle: { fontFamily: "Inter_700Bold", fontSize: 18, color: C.text, marginBottom: 14 },
+    sectionHeaderRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 14,
+      marginTop: 8,
+    },
+    seeAll: { fontFamily: "Inter_500Medium", fontSize: 14, color: C.tint },
+    continueCard: {
+      backgroundColor: C.card,
+      borderRadius: 20,
+      padding: 20,
+      marginBottom: 8,
+      borderWidth: 1,
+      borderColor: C.cardBorder,
+      overflow: "hidden",
+    },
+    continueHeader: { flexDirection: "row", alignItems: "center", marginBottom: 10, gap: 8 },
+    continueDot: { width: 8, height: 8, borderRadius: 4 },
+    continueModule: { fontFamily: "Inter_600SemiBold", fontSize: 12, flex: 1 },
+    diffBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
+    diffText: { fontFamily: "Inter_600SemiBold", fontSize: 11 },
+    continueTitle: { fontFamily: "Inter_700Bold", fontSize: 17, color: C.text, marginBottom: 6 },
+    continueSubtitle: {
+      fontFamily: "Inter_400Regular",
+      fontSize: 14,
+      color: C.textSecondary,
+      lineHeight: 20,
+      marginBottom: 16,
+    },
+    continueFooter: { flexDirection: "row", alignItems: "center", gap: 12 },
+    continueInfo: { flexDirection: "row", alignItems: "center", gap: 4 },
+    continueInfoText: { fontFamily: "Inter_400Regular", fontSize: 13, color: C.textSecondary },
+    continueStartBtn: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: C.tint,
+      borderRadius: 10,
+      paddingHorizontal: 14,
+      paddingVertical: 8,
+      gap: 6,
+      marginLeft: "auto",
+    },
+    continueStartText: { fontFamily: "Inter_600SemiBold", fontSize: 13, color: C.background },
+    moduleCard: {
+      flexDirection: "row",
+      backgroundColor: C.card,
+      borderRadius: 16,
+      padding: 16,
+      marginBottom: 10,
+      borderWidth: 1,
+      borderColor: C.cardBorder,
+      overflow: "hidden",
+      alignItems: "center",
+      gap: 14,
+    },
+    moduleCardLocked: { opacity: 0.55 },
+    moduleCardLeft: {},
+    moduleIconBox: {
+      width: 44,
+      height: 44,
+      borderRadius: 12,
+      backgroundColor: C.backgroundTertiary,
+      alignItems: "center",
+      justifyContent: "center",
+      borderWidth: 1,
+    },
+    moduleCardContent: { flex: 1 },
+    moduleCardHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginBottom: 4,
+    },
+    moduleTitle: { fontFamily: "Inter_600SemiBold", fontSize: 15, color: C.text, flex: 1, marginRight: 8 },
+    moduleTitleLocked: { color: C.textTertiary },
+    moduleDesc: { fontFamily: "Inter_400Regular", fontSize: 12, color: C.textSecondary, marginBottom: 8 },
+    moduleProgressRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+    moduleTrack: { flex: 1, height: 4, backgroundColor: C.backgroundTertiary, borderRadius: 2, overflow: "hidden" },
+    moduleFill: { height: "100%", borderRadius: 2 },
+    modulePct: { fontFamily: "Inter_500Medium", fontSize: 11, color: C.textSecondary },
+    moduleLocked: { fontFamily: "Inter_400Regular", fontSize: 11, color: C.textTertiary },
+  });
+}

@@ -1,5 +1,5 @@
 import { Feather } from "@expo/vector-icons";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   Platform,
   Pressable,
@@ -12,6 +12,7 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import Colors from "@/constants/colors";
+import { useTheme } from "@/context/ThemeContext";
 import { useProgress } from "@/context/ProgressContext";
 import {
   Difficulty,
@@ -20,8 +21,6 @@ import {
   getDifficultyLabel,
 } from "@/data/curriculum";
 
-const C = Colors.dark;
-
 function ExampleCard({
   example,
   index,
@@ -29,6 +28,8 @@ function ExampleCard({
   example: (typeof REAL_WORLD_EXAMPLES)[0];
   index: number;
 }) {
+  const { colors: C } = useTheme();
+  const styles = useMemo(() => createStyles(C), [C]);
   const [expanded, setExpanded] = useState(false);
   const { favoriteIds, toggleFavorite } = useProgress();
   const isFav = favoriteIds.includes(example.id);
@@ -59,7 +60,7 @@ function ExampleCard({
               style={styles.favBtn}
             >
               <Feather
-                name={isFav ? "heart" : "heart"}
+                name="heart"
                 size={16}
                 color={isFav ? "#FF4757" : C.textTertiary}
               />
@@ -91,7 +92,7 @@ function ExampleCard({
         {expanded && (
           <View style={styles.expandedContent}>
             <View style={styles.divider} />
-            <Text style={styles.stepsTitle}>Implementation Steps</Text>
+            <Text style={styles.stepsTitle}>Шаги реализации</Text>
             {example.steps.map((step, i) => (
               <View key={i} style={styles.stepRow}>
                 <View style={[styles.stepNum, { backgroundColor: example.color + "22" }]}>
@@ -101,7 +102,7 @@ function ExampleCard({
               </View>
             ))}
 
-            <Text style={[styles.stepsTitle, { marginTop: 16 }]}>Nodes Used</Text>
+            <Text style={[styles.stepsTitle, { marginTop: 16 }]}>Используемые ноды</Text>
             <View style={styles.allNodesRow}>
               {example.nodes.map((node) => (
                 <View key={node} style={[styles.nodeChip, { borderColor: example.color + "44" }]}>
@@ -117,16 +118,19 @@ function ExampleCard({
 }
 
 export default function ExamplesScreen() {
+  const { colors: C } = useTheme();
+  const styles = useMemo(() => createStyles(C), [C]);
   const insets = useSafeAreaInsets();
-  const [categoryFilter, setCategoryFilter] = useState("All");
+  const [categoryFilter, setCategoryFilter] = useState("Все");
   const [diffFilter, setDiffFilter] = useState<Difficulty | "all">("all");
 
   const topPadding = Platform.OS === "web" ? 67 : insets.top;
 
-  const categories = ["All", ...Array.from(new Set(REAL_WORLD_EXAMPLES.map((e) => e.category)))];
+  const rawCategories = Array.from(new Set(REAL_WORLD_EXAMPLES.map((e) => e.category)));
+  const categories = ["Все", ...rawCategories];
 
   const filtered = REAL_WORLD_EXAMPLES.filter((e) => {
-    const catMatch = categoryFilter === "All" || e.category === categoryFilter;
+    const catMatch = categoryFilter === "Все" || e.category === categoryFilter;
     const diffMatch = diffFilter === "all" || e.difficulty === diffFilter;
     return catMatch && diffMatch;
   });
@@ -143,9 +147,9 @@ export default function ExamplesScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.screenTitle}>Real Examples</Text>
+        <Text style={styles.screenTitle}>Реальные примеры</Text>
         <Text style={styles.screenSubtitle}>
-          Learn from practical game mechanics built in Blueprint
+          Учись на практических игровых механиках из Blueprint
         </Text>
 
         <ScrollView
@@ -167,7 +171,7 @@ export default function ExamplesScreen() {
         </ScrollView>
 
         <View style={styles.countRow}>
-          <Text style={styles.countText}>{filtered.length} examples</Text>
+          <Text style={styles.countText}>{filtered.length} примеров</Text>
         </View>
 
         {filtered.map((ex, i) => (
@@ -178,167 +182,87 @@ export default function ExamplesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.background },
-  scrollContent: { paddingHorizontal: 20 },
-  screenTitle: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 28,
-    color: C.text,
-    marginBottom: 4,
-  },
-  screenSubtitle: {
-    fontFamily: "Inter_400Regular",
-    fontSize: 14,
-    color: C.textSecondary,
-    marginBottom: 20,
-  },
-  filterRow: {
-    gap: 8,
-    marginBottom: 16,
-    paddingRight: 20,
-  },
-  filterChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: C.card,
-    borderWidth: 1,
-    borderColor: C.cardBorder,
-  },
-  filterChipActive: {
-    backgroundColor: C.tint + "22",
-    borderColor: C.tint,
-  },
-  filterText: {
-    fontFamily: "Inter_500Medium",
-    fontSize: 13,
-    color: C.textSecondary,
-  },
-  filterTextActive: { color: C.tint },
-  countRow: { marginBottom: 14 },
-  countText: {
-    fontFamily: "Inter_400Regular",
-    fontSize: 13,
-    color: C.textSecondary,
-  },
-  card: {
-    backgroundColor: C.card,
-    borderRadius: 18,
-    padding: 18,
-    marginBottom: 14,
-    borderWidth: 1,
-    borderColor: C.cardBorder,
-    borderLeftWidth: 3,
-    overflow: "hidden",
-  },
-  cardHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginBottom: 10,
-  },
-  categoryBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  categoryText: {
-    fontFamily: "Inter_600SemiBold",
-    fontSize: 11,
-  },
-  diffBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
-  diffText: {
-    fontFamily: "Inter_600SemiBold",
-    fontSize: 11,
-  },
-  cardActions: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginLeft: "auto",
-    gap: 12,
-  },
-  favBtn: { padding: 2 },
-  cardTitle: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 17,
-    color: C.text,
-    marginBottom: 6,
-  },
-  cardDesc: {
-    fontFamily: "Inter_400Regular",
-    fontSize: 14,
-    color: C.textSecondary,
-    lineHeight: 20,
-    marginBottom: 14,
-  },
-  nodesRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 6,
-  },
-  allNodesRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 6,
-    marginTop: 8,
-  },
-  nodeChip: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 6,
-    backgroundColor: C.backgroundTertiary,
-    borderWidth: 1,
-    borderColor: C.cardBorder,
-  },
-  nodeChipMore: {
-    backgroundColor: C.tint + "18",
-    borderColor: C.tint + "44",
-  },
-  nodeText: {
-    fontFamily: "Inter_500Medium",
-    fontSize: 11,
-    color: C.textSecondary,
-  },
-  expandedContent: { marginTop: 4 },
-  divider: {
-    height: 1,
-    backgroundColor: C.separator,
-    marginVertical: 16,
-  },
-  stepsTitle: {
-    fontFamily: "Inter_600SemiBold",
-    fontSize: 14,
-    color: C.text,
-    marginBottom: 12,
-  },
-  stepRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 12,
-    marginBottom: 10,
-  },
-  stepNum: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-    flexShrink: 0,
-  },
-  stepNumText: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 12,
-  },
-  stepText: {
-    fontFamily: "Inter_400Regular",
-    fontSize: 14,
-    color: C.textSecondary,
-    lineHeight: 20,
-    flex: 1,
-  },
-});
+function createStyles(C: typeof Colors.dark) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: C.background },
+    scrollContent: { paddingHorizontal: 20 },
+    screenTitle: { fontFamily: "Inter_700Bold", fontSize: 28, color: C.text, marginBottom: 4 },
+    screenSubtitle: {
+      fontFamily: "Inter_400Regular",
+      fontSize: 14,
+      color: C.textSecondary,
+      marginBottom: 20,
+    },
+    filterRow: { gap: 8, marginBottom: 16, paddingRight: 20 },
+    filterChip: {
+      paddingHorizontal: 14,
+      paddingVertical: 8,
+      borderRadius: 20,
+      backgroundColor: C.card,
+      borderWidth: 1,
+      borderColor: C.cardBorder,
+    },
+    filterChipActive: { backgroundColor: C.tint + "22", borderColor: C.tint },
+    filterText: { fontFamily: "Inter_500Medium", fontSize: 13, color: C.textSecondary },
+    filterTextActive: { color: C.tint },
+    countRow: { marginBottom: 14 },
+    countText: { fontFamily: "Inter_400Regular", fontSize: 13, color: C.textSecondary },
+    card: {
+      backgroundColor: C.card,
+      borderRadius: 18,
+      padding: 18,
+      marginBottom: 14,
+      borderWidth: 1,
+      borderColor: C.cardBorder,
+      borderLeftWidth: 3,
+      overflow: "hidden",
+    },
+    cardHeader: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 10 },
+    categoryBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
+    categoryText: { fontFamily: "Inter_600SemiBold", fontSize: 11 },
+    diffBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
+    diffText: { fontFamily: "Inter_600SemiBold", fontSize: 11 },
+    cardActions: { flexDirection: "row", alignItems: "center", marginLeft: "auto", gap: 12 },
+    favBtn: { padding: 2 },
+    cardTitle: { fontFamily: "Inter_700Bold", fontSize: 17, color: C.text, marginBottom: 6 },
+    cardDesc: {
+      fontFamily: "Inter_400Regular",
+      fontSize: 14,
+      color: C.textSecondary,
+      lineHeight: 20,
+      marginBottom: 14,
+    },
+    nodesRow: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
+    allNodesRow: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 8 },
+    nodeChip: {
+      paddingHorizontal: 10,
+      paddingVertical: 4,
+      borderRadius: 6,
+      backgroundColor: C.backgroundTertiary,
+      borderWidth: 1,
+      borderColor: C.cardBorder,
+    },
+    nodeChipMore: { backgroundColor: C.tint + "18", borderColor: C.tint + "44" },
+    nodeText: { fontFamily: "Inter_500Medium", fontSize: 11, color: C.textSecondary },
+    expandedContent: { marginTop: 4 },
+    divider: { height: 1, backgroundColor: C.separator, marginVertical: 16 },
+    stepsTitle: { fontFamily: "Inter_600SemiBold", fontSize: 14, color: C.text, marginBottom: 12 },
+    stepRow: { flexDirection: "row", alignItems: "flex-start", gap: 12, marginBottom: 10 },
+    stepNum: {
+      width: 24,
+      height: 24,
+      borderRadius: 12,
+      alignItems: "center",
+      justifyContent: "center",
+      flexShrink: 0,
+    },
+    stepNumText: { fontFamily: "Inter_700Bold", fontSize: 12 },
+    stepText: {
+      fontFamily: "Inter_400Regular",
+      fontSize: 14,
+      color: C.textSecondary,
+      lineHeight: 20,
+      flex: 1,
+    },
+  });
+}
