@@ -25,10 +25,6 @@ function NativeTabLayout() {
         <Icon sf={{ default: "books.vertical", selected: "books.vertical.fill" }} />
         <Label>Библиотека</Label>
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="examples">
-        <Icon sf={{ default: "lightbulb", selected: "lightbulb.fill" }} />
-        <Label>Примеры</Label>
-      </NativeTabs.Trigger>
       <NativeTabs.Trigger name="mechanics">
         <Icon sf={{ default: "wrench.and.screwdriver", selected: "wrench.and.screwdriver.fill" }} />
         <Label>Механики</Label>
@@ -122,15 +118,7 @@ function ClassicTabLayout() {
       />
       <Tabs.Screen
         name="examples"
-        options={{
-          title: "Примеры",
-          tabBarIcon: ({ color }) =>
-            isIOS ? (
-              <SymbolView name="lightbulb.fill" tintColor={color} size={22} />
-            ) : (
-              <Feather name="layers" size={22} color={color} />
-            ),
-        }}
+        options={{ href: null }}
       />
       <Tabs.Screen
         name="mechanics"

@@ -28,6 +28,121 @@ import {
   NodeExample,
 } from "@/data/library";
 
+const NODE_TYPE_COLORS: Record<string, string> = {
+  event: "#B71C1C",
+  flow: "#4A148C",
+  function: "#1565C0",
+  value: "#1B5E20",
+  variable: "#E65100",
+};
+
+function detectNodeType(label: string): string {
+  const lower = label.toLowerCase();
+  if (/^event\b|begin\s*play|tick|on hit|on death|overlap|input\s*action|timer\s*event|regen/i.test(label)) return "event";
+  if (/cast\s*to|branch|sequence|for\s*loop|for\s*each|switch\s*on/i.test(label)) return "flow";
+  if (/get\s+(health|walk\s*speed|mesh|player|actor\s+location|control\s*rotation|right\s*vector|camera|distance)/i.test(label)) return "value";
+  if (/set\s+\w|float\s*(<=|<|>=|>)|random|lerp|vector\s*\*/i.test(label)) return "value";
+  if (/^\s*(health|maxhealth|speed|is\s*alive|walkspeed)\s*=/i.test(label)) return "variable";
+  return "function";
+}
+
+function parseCodeToNodes(code: string): Array<{ label: string; sub?: string; type: string }> {
+  const lines = code.split("\n");
+  const nodes: Array<{ label: string; sub?: string; type: string }> = [];
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+
+    const arrowIdx = trimmed.indexOf("→");
+    let content = arrowIdx >= 0 ? trimmed.slice(arrowIdx + 1).trim() : trimmed;
+    if (!content) continue;
+
+    const parenIdx = content.indexOf("(");
+    const colonIdx = content.indexOf(":");
+    let label = content;
+    let sub: string | undefined;
+
+    if (parenIdx > 0 && parenIdx < 35) {
+      label = content.slice(0, parenIdx).trim();
+      sub = content.slice(parenIdx, Math.min(content.length, parenIdx + 30)).trim();
+    } else if (colonIdx > 0 && colonIdx < 25 && arrowIdx < 0) {
+      label = content.slice(0, colonIdx).trim();
+    }
+
+    const indentLevel = line.search(/\S/);
+    if (arrowIdx < 0 && nodes.length > 0 && indentLevel > 0) {
+      const last = nodes[nodes.length - 1];
+      if (!last.sub && content.length < 40) {
+        last.sub = (last.sub ? last.sub + " · " : "") + content.slice(0, 35);
+        continue;
+      }
+    }
+
+    if (label.length < 2) continue;
+
+    nodes.push({
+      label: label.slice(0, 22),
+      sub: sub ? sub.slice(0, 26) : undefined,
+      type: detectNodeType(label),
+    });
+  }
+
+  return nodes.slice(0, 6);
+}
+
+function BlueprintFlowPreview({ code, color, C }: { code: string; color: string; C: typeof Colors.dark }) {
+  const nodes = useMemo(() => parseCodeToNodes(code), [code]);
+
+  if (nodes.length === 0) return null;
+
+  return (
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8 }}>
+      <View style={{ flexDirection: "row", alignItems: "center", paddingVertical: 4, paddingHorizontal: 2 }}>
+        {nodes.map((node, idx) => {
+          const nc = NODE_TYPE_COLORS[node.type] || "#1565C0";
+          return (
+            <React.Fragment key={idx}>
+              <View style={{
+                borderRadius: 8,
+                borderWidth: 1.5,
+                borderColor: nc + "88",
+                overflow: "hidden",
+                minWidth: 80,
+                maxWidth: 120,
+              }}>
+                <View style={{ backgroundColor: nc, paddingHorizontal: 7, paddingVertical: 5 }}>
+                  <Text
+                    style={{ fontSize: 9, color: "#FFF", fontWeight: "700", fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace" }}
+                    numberOfLines={1}
+                  >
+                    {node.label}
+                  </Text>
+                </View>
+                {node.sub && (
+                  <View style={{ backgroundColor: "#0D1420", paddingHorizontal: 7, paddingVertical: 4 }}>
+                    <Text
+                      style={{ fontSize: 8, color: "#8B9BB4", fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace" }}
+                      numberOfLines={1}
+                    >
+                      {node.sub}
+                    </Text>
+                  </View>
+                )}
+              </View>
+              {idx < nodes.length - 1 && (
+                <View style={{ width: 22, alignItems: "center" }}>
+                  <Feather name="arrow-right" size={13} color={color + "99"} />
+                </View>
+              )}
+            </React.Fragment>
+          );
+        })}
+      </View>
+    </ScrollView>
+  );
+}
+
 function ExampleCard({ example, color, C, styles }: { example: NodeExample; color: string; C: typeof Colors.dark; styles: any }) {
   const [expanded, setExpanded] = useState(false);
   return (
@@ -38,7 +153,7 @@ function ExampleCard({ example, color, C, styles }: { example: NodeExample; colo
     >
       <View style={styles.exampleHeader}>
         <View style={[styles.exampleIconBox, { backgroundColor: color + "22" }]}>
-          <Feather name="terminal" size={13} color={color} />
+          <Feather name="git-merge" size={13} color={color} />
         </View>
         <Text style={styles.exampleTitle}>{example.title}</Text>
         <Feather name={expanded ? "chevron-up" : "chevron-down"} size={16} color={C.textSecondary} />
@@ -46,9 +161,7 @@ function ExampleCard({ example, color, C, styles }: { example: NodeExample; colo
       {expanded && (
         <>
           <Text style={styles.exampleDesc}>{example.description}</Text>
-          <View style={[styles.codeBox, { borderColor: color + "33" }]}>
-            <Text style={[styles.codeText, { color: color }]}>{example.code}</Text>
-          </View>
+          <BlueprintFlowPreview code={example.code} color={color} C={C} />
         </>
       )}
     </TouchableOpacity>
