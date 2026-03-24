@@ -29,6 +29,10 @@ function NativeTabLayout() {
         <Icon sf={{ default: "wrench.and.screwdriver", selected: "wrench.and.screwdriver.fill" }} />
         <Label>Механики</Label>
       </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="examples">
+        <Icon sf={{ default: "lightbulb", selected: "lightbulb.fill" }} />
+        <Label>Примеры</Label>
+      </NativeTabs.Trigger>
       <NativeTabs.Trigger name="practice">
         <Icon sf={{ default: "pencil.and.list.clipboard", selected: "pencil.and.list.clipboard" }} />
         <Label>Практика</Label>
@@ -70,7 +74,7 @@ function ClassicTabLayout() {
           paddingBottom: isWeb ? 0 : insets.bottom,
           ...(isWeb ? { height: 84 } : {}),
         },
-        tabBarScrollEnabled: !isIOS && !isWeb,
+        tabBarScrollEnabled: (!isIOS && !isWeb) as never,
         tabBarBackground: () =>
           isIOS ? (
             <BlurView intensity={80} tint={isDark ? "dark" : "light"} style={StyleSheet.absoluteFill} />
@@ -122,7 +126,15 @@ function ClassicTabLayout() {
       />
       <Tabs.Screen
         name="examples"
-        options={{ href: null }}
+        options={{
+          title: "Примеры",
+          tabBarIcon: ({ color }) =>
+            isIOS ? (
+              <SymbolView name="lightbulb.fill" tintColor={color} size={22} />
+            ) : (
+              <Feather name="star" size={22} color={color} />
+            ),
+        }}
       />
       <Tabs.Screen
         name="mechanics"

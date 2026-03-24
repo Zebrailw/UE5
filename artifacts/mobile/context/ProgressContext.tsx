@@ -133,17 +133,21 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
       completedCount: number
     ): string[] => {
       const unlocked = [...newState.unlockedAchievements];
+      const stats = {
+        totalLessons: completedCount,
+        xp: newState.xp,
+        streak: newState.streak,
+        perfectQuizzes: newState.totalQuizzesPerfect,
+      };
 
       for (const ach of ACHIEVEMENTS) {
         if (unlocked.includes(ach.id)) continue;
-        let earned = false;
-
-        if (ach.xpRequired > 0 && newState.xp >= ach.xpRequired) earned = true;
-        if (ach.completedLessons > 0 && completedCount >= ach.completedLessons) earned = true;
-        if (ach.id === "ach_003" && newState.streak >= 3) earned = true;
-        if (ach.id === "ach_006" && newState.totalQuizzesPerfect >= 5) earned = true;
-
-        if (earned) unlocked.push(ach.id);
+        try {
+          if ((ach as { id: string; condition: (s: typeof stats) => boolean }).condition(stats)) {
+            unlocked.push(ach.id);
+          }
+        } catch {
+        }
       }
 
       return unlocked;

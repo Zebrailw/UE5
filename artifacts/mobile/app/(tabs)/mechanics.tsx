@@ -73,12 +73,10 @@ function MechanicCard({ mechanic, onPress, index, C, styles }: {
       <Pressable
         style={({ pressed }) => [styles.mechanicCard, pressed && { opacity: 0.85 }]}
         onPress={onPress}
-        activeOpacity={0.9}
       >
         <LinearGradient
           colors={["#141C28", "#0F1620"]}
-          style={StyleSheet.absoluteFill}
-          borderRadius={14}
+          style={[StyleSheet.absoluteFill, { borderRadius: 14 }]}
         />
         <View style={styles.mechanicCardHeader}>
           <View style={styles.mechanicMeta}>
