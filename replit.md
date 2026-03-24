@@ -56,7 +56,7 @@ artifacts-monorepo/
 - **Google Play ready** — adaptive icon, versionCode, permissions (new)
 
 ### App Screens
-- **Home** — XP bar, stats, continue learning card, module overview
+- **Home** — Learning dashboard: XP bar, stats, "Путь к UE5" 4-stage roadmap with progress, "Совет дня", 5 interactive cheat sheets (hotkeys, top-20 nodes, Day 1 in UE5, patterns, Blueprint→C++) openable as bottom-sheet modals
 - **Learn** — Full curriculum with search, filter, lesson list
 - **Mechanics** — 120+ mechanics with search, category filter, detail view
 - **Practice** — Visual Blueprint node connection editor with 12+ challenges

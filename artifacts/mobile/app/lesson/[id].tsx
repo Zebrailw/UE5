@@ -33,8 +33,11 @@ export default function LessonScreen() {
     toggleReviewLater,
   } = useProgress();
 
-  const lesson = MODULES.flatMap((m) => m.lessons).find((l) => l.id === id);
+  const allLessons = MODULES.flatMap((m) => m.lessons);
+  const lesson = allLessons.find((l) => l.id === id);
   const mod = MODULES.find((m) => m.id === lesson?.moduleId);
+  const lessonIdx = lesson ? allLessons.findIndex((l) => l.id === lesson.id) : -1;
+  const nextLesson = lessonIdx >= 0 && lessonIdx < allLessons.length - 1 ? allLessons[lessonIdx + 1] : null;
 
   const [tab, setTab] = useState<"learn" | "practice">("learn");
   const isCompleted = lesson ? isLessonCompleted(lesson.id) : false;
@@ -60,35 +63,40 @@ export default function LessonScreen() {
     await completeLesson(lesson.id, lesson.xpReward);
   };
 
+  const handleNextLesson = () => {
+    if (nextLesson) router.replace(`/lesson/${nextLesson.id}`);
+  };
+
   const handleStartQuiz = () => {
     router.push(`/quiz/${lesson.id}`);
   };
 
+  const renderInlineText = (text: string, baseStyle: object, key?: number) => {
+    const parts = text.split(/(\*\*[^*]+\*\*)/g);
+    return (
+      <Text key={key} style={baseStyle}>
+        {parts.map((part, pi) =>
+          part.startsWith("**") && part.endsWith("**") ? (
+            <Text key={pi} style={[baseStyle, { fontFamily: "Inter_700Bold", color: C.text }]}>
+              {part.slice(2, -2)}
+            </Text>
+          ) : (
+            <Text key={pi}>{part}</Text>
+          )
+        )}
+      </Text>
+    );
+  };
+
   const formatContent = (content: string) => {
     return content.split("\n\n").map((para, i) => {
-      const bulletLines = para.split("\n").filter((l) => l.startsWith("•"));
-      const codeLines = para.startsWith("```");
+      const lines = para.split("\n");
+      const bulletLines = lines.filter((l) => l.startsWith("•"));
+      const numberedLines = lines.filter((l) => /^\d+\./.test(l));
+      const isCode = para.startsWith("```");
+      const isUe5Block = para.startsWith("🔧") || para.startsWith("UE5:");
 
-      if (bulletLines.length > 0 && para.split("\n")[0] && !para.split("\n")[0].startsWith("•")) {
-        const header = para.split("\n")[0];
-        const bullets = para.split("\n").filter((l) => l.startsWith("•"));
-        const rest = para.split("\n").filter((l) => !l.startsWith("•") && l !== header);
-
-        return (
-          <View key={i} style={styles.contentBlock}>
-            {header && <Text style={styles.contentHeader}>{header.replace(/\*\*/g, "")}</Text>}
-            {rest.map((r, ri) => r ? <Text key={ri} style={styles.contentBody}>{r.replace(/\*\*/g, "")}</Text> : null)}
-            {bullets.map((b, bi) => (
-              <View key={bi} style={styles.bulletRow}>
-                <View style={[styles.bulletDot, { backgroundColor: mod.color }]} />
-                <Text style={styles.bulletText}>{b.replace("• ", "").replace(/\*\*/g, "")}</Text>
-              </View>
-            ))}
-          </View>
-        );
-      }
-
-      if (codeLines) {
+      if (isCode) {
         return (
           <View key={i} style={styles.codeBlock}>
             <Text style={styles.codeText}>{para.replace(/```/g, "").trim()}</Text>
@@ -96,9 +104,56 @@ export default function LessonScreen() {
         );
       }
 
+      if (isUe5Block) {
+        return (
+          <View key={i} style={[styles.ue5Block, { borderColor: mod.color + "55" }]}>
+            <View style={styles.ue5Header}>
+              <Feather name="monitor" size={14} color={mod.color} />
+              <Text style={[styles.ue5Label, { color: mod.color }]}>В Unreal Engine</Text>
+            </View>
+            {renderInlineText(para.replace(/^🔧\s*|^UE5:\s*/g, ""), styles.ue5Text)}
+          </View>
+        );
+      }
+
+      if (numberedLines.length > 0) {
+        const header = lines[0] && !/^\d+\./.test(lines[0]) ? lines[0] : null;
+        const steps = lines.filter((l) => /^\d+\./.test(l));
+        return (
+          <View key={i} style={styles.contentBlock}>
+            {header && <Text style={styles.contentHeader}>{header.replace(/\*\*/g, "")}</Text>}
+            {steps.map((step, si) => (
+              <View key={si} style={styles.stepRow}>
+                <View style={[styles.stepNum, { backgroundColor: mod.color }]}>
+                  <Text style={styles.stepNumText}>{si + 1}</Text>
+                </View>
+                {renderInlineText(step.replace(/^\d+\.\s*/, ""), styles.bulletText)}
+              </View>
+            ))}
+          </View>
+        );
+      }
+
+      if (bulletLines.length > 0) {
+        const header = lines[0] && !lines[0].startsWith("•") ? lines[0] : null;
+        const rest = lines.filter((l) => !l.startsWith("•") && l !== header && l.trim());
+        return (
+          <View key={i} style={styles.contentBlock}>
+            {header && <Text style={styles.contentHeader}>{header.replace(/\*\*/g, "")}</Text>}
+            {rest.map((r, ri) => renderInlineText(r, styles.contentBody, ri))}
+            {bulletLines.map((b, bi) => (
+              <View key={bi} style={styles.bulletRow}>
+                <View style={[styles.bulletDot, { backgroundColor: mod.color }]} />
+                {renderInlineText(b.replace("• ", ""), styles.bulletText)}
+              </View>
+            ))}
+          </View>
+        );
+      }
+
       return (
         <View key={i} style={styles.contentBlock}>
-          <Text style={styles.contentBody}>{para.replace(/\*\*/g, "")}</Text>
+          {renderInlineText(para, styles.contentBody)}
         </View>
       );
     });
@@ -283,15 +338,26 @@ export default function LessonScreen() {
         ) : (
           <View style={styles.completedFooter}>
             <View style={styles.completedBadge}>
-              <Feather name="check-circle" size={18} color={C.success} />
-              <Text style={styles.completedText}>Урок пройден</Text>
+              <Feather name="check-circle" size={16} color={C.success} />
+              <Text style={styles.completedText}>Пройдено</Text>
             </View>
-            <Pressable
-              style={[styles.quizFooterBtn, { backgroundColor: mod.color }]}
-              onPress={handleStartQuiz}
-            >
-              <Text style={styles.quizFooterText}>Пройти квиз</Text>
-            </Pressable>
+            <View style={{ flexDirection: "row", gap: 8 }}>
+              <Pressable
+                style={[styles.quizFooterBtn, { backgroundColor: C.backgroundTertiary, borderWidth: 1, borderColor: C.cardBorder }]}
+                onPress={handleStartQuiz}
+              >
+                <Text style={[styles.quizFooterText, { color: C.text }]}>Квиз</Text>
+              </Pressable>
+              {nextLesson && (
+                <Pressable
+                  style={[styles.quizFooterBtn, { backgroundColor: mod.color, flexDirection: "row", gap: 6, alignItems: "center" }]}
+                  onPress={handleNextLesson}
+                >
+                  <Text style={styles.quizFooterText}>Следующий</Text>
+                  <Feather name="arrow-right" size={14} color={C.background} />
+                </Pressable>
+              )}
+            </View>
           </View>
         )}
       </View>
@@ -422,6 +488,20 @@ function createStyles(C: typeof Colors.dark) {
       color: C.tint,
       lineHeight: 20,
     },
+    ue5Block: {
+      backgroundColor: C.card,
+      borderRadius: 12,
+      padding: 14,
+      marginBottom: 14,
+      borderWidth: 1,
+      borderLeftWidth: 3,
+    },
+    ue5Header: { flexDirection: "row", alignItems: "center", gap: 7, marginBottom: 8 },
+    ue5Label: { fontFamily: "Inter_600SemiBold", fontSize: 12, textTransform: "uppercase", letterSpacing: 0.5 },
+    ue5Text: { fontFamily: "Inter_400Regular", fontSize: 14, color: C.text, lineHeight: 22 },
+    stepRow: { flexDirection: "row", alignItems: "flex-start", gap: 10, marginVertical: 5 },
+    stepNum: { width: 22, height: 22, borderRadius: 11, alignItems: "center", justifyContent: "center", marginTop: 1 },
+    stepNumText: { fontFamily: "Inter_700Bold", fontSize: 11, color: "#fff" },
     exampleCard: {
       backgroundColor: C.card,
       borderRadius: 14,
