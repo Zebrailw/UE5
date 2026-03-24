@@ -60,7 +60,7 @@ artifacts-monorepo/
 - **Learn** — Full curriculum with search, filter, lesson list
 - **Mechanics** — 120+ mechanics with search, category filter, detail view
 - **Practice** — Visual Blueprint node connection editor with 12+ challenges
-- **Node Editor (Редактор)** — Free-form node graph editor: Input/Math/Output nodes, drag-to-connect pins, JSON export via system Share sheet, Unreal Engine integration guide modal (NEW)
+- **Node Editor (Редактор)** — Full UE5-style Blueprint node editor: 30+ node types across 8 categories, variable system with UPROPERTY flags, three export modes (C++ .h/.cpp, JSON + Python importer, Blueprint text), zoom/grid canvas, node palette with search (NEW)
 - **Progress** — Module progress bars, achievements, stats grid
 - **Profile** — User rank, favorites, review later, donation modal, settings
 - **Lesson** — Theory content, practice tab, complete & quiz actions

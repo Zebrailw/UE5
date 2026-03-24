@@ -1,0 +1,217 @@
+Вот улучшенный промпт, который заставит нейросеть создать полноценный визуальный редактор с настоящей логикой Unreal Engine — с флагами, макросами, переменными и экспортом в нативный для UE5 формат файла:
+
+---
+
+Расширенный промпт:
+
+Ты — senior full-stack разработчик и эксперт по глубокой интеграции с Unreal Engine 5. Мне нужен полноценный визуальный редактор нод, который генерирует нативные файлы Unreal Engine.
+
+Контекст:
+У меня есть веб-приложение (React/TypeScript). Нужно добавить новую вкладку "UE5 Node Editor", которая работает как упрощенный аналог Blueprint Editor, но с возможностью экспорта в файлы, которые можно напрямую скопировать в проект Unreal Engine 5 и они будут работать без дополнительной обработки.
+
+---
+
+1. Функционал нод (узлов)
+
+Создай полноценную систему нод с использованием reactflow (xyflow), которая поддерживает:
+
+А. Переменные (Variables)
+
+· Возможность создавать переменные следующих типов:
+  · bool (флаг)
+  · int32
+  · float
+  · FVector (X, Y, Z)
+  · FRotator
+  · FString
+  · FName
+· Для каждого типа — свой цвет ноды и свой визуальный стиль сокетов.
+· Нода "Get Variable" — получает значение переменной.
+· Нода "Set Variable" — устанавливает значение переменной.
+· Панель управления переменными (список всех созданных переменных с возможностью редактирования имени, типа, значения, а также флагов: BlueprintReadOnly, EditAnywhere, Category).
+
+Б. Флаги (Flags)
+
+Возможность добавлять к любым нодам и переменным следующие флаги (как toggle-кнопки в UI):
+
+· EditAnywhere / VisibleAnywhere
+· BlueprintCallable / BlueprintPure
+· Category="..." (пользователь может задать категорию)
+· meta = (AllowPrivateAccess)
+· meta = (ExposeOnSpawn)
+· AdvancedDisplay
+· Transient
+
+В. Макросы (Macros)
+
+· Возможность создавать макросы — группы нод, которые можно свернуть в одну ноду и переиспользовать.
+· Макрос имеет входные и выходные Execution Pins (импульсы).
+· Макрос можно сохранить как отдельный "макрос" в текущем проекте редактора.
+· Нода "Call Macro" — вызывает созданный макрос.
+
+Г. Типы нод (полный набор)
+
+Обязательно реализовать следующие категории нод:
+
+1. Execution Flow (Execution Pins):
+   · Event BeginPlay
+   · Event Tick (с выходом Delta Seconds)
+   · Event Custom (пользовательское событие)
+   · Sequence (выполняет несколько выходов по порядку)
+   · Branch (if/else)
+   · Delay (с паузой в секундах)
+   · ForLoop
+   · WhileLoop
+2. Математические ноды:
+   · Add, Subtract, Multiply, Divide
+   · Random Float in Range
+   · Map Range Clamped
+3. Ноды работы с векторами:
+   · Make Vector, Break Vector
+   · Vector + Vector, Vector * Float
+   · Get Unit Direction
+   · Vector Length
+4. Ноды работы со строками:
+   · Append String
+   · Format String (с подстановкой {0}, {1})
+5. Ноды акторов и трансформации:
+   · Spawn Actor
+   · Destroy Actor
+   · Get Actor Location, Set Actor Location
+   · Get Actor Rotation, Set Actor Rotation
+   · Add Movement Input
+   · Line Trace by Channel
+6. Cast нода:
+   · Cast To [Class] — возможность выбрать целевой класс (текстовый ввод)
+7. Кастомная нода:
+   · Print String — вывод в лог/экран с выбором цвета и длительности
+
+---
+
+2. Визуальное оформление
+
+· Стиль как в Unreal Engine 5 — темно-серый фон, синие экзекьюшн пины (белые стрелки), цветные дата-пины:
+  · Bool — красный / розовый
+  · Int — синий
+  · Float — зеленый
+  · Vector — желтый
+  · String — фиолетовый
+· Execution Pins — треугольная форма (вход слева, выход справа) с белой обводкой.
+· Возможность зумить и панорамировать рабочую область.
+· Грид (сетка) как в UE5.
+
+---
+
+3. Экспорт в нативный формат Unreal Engine
+
+Критически важно: Экспорт должен создавать файл с расширением .uasset (или готовый к импорту текстовый .h + .cpp), который можно просто скопировать в папку Content/Scripts или Source проекта UE5.
+
+Реализуй два режима экспорта:
+
+Режим А: Экспорт как Blueprint (Text Format)
+
+Генерация текстового представления Blueprint в формате, который Unreal Engine может импортировать через Import Asset или через копирование файла с расширением .uasset (если это возможно, но для простоты — сгенерируй файл с расширением .bp.txt с инструкцией, как его переименовать и импортировать).
+
+Режим Б: Экспорт как C++ код
+
+Сгенерируй готовый C++ класс (.h и .cpp) на основе созданного графа нод. Файлы должны быть структурированы так, что их можно просто добавить в Source/MyProject/ и скомпилировать.
+
+Структура генерируемого C++ кода:
+
+```cpp
+// GeneratedNode_MyGraph.h
+#pragma once
+#include "CoreMinimal.h"
+#include "GameFramework/Actor.h"
+#include "GeneratedNode_MyGraph.generated.h"
+
+UCLASS(Blueprintable, BlueprintType)
+class MYPROJECT_API AGeneratedNode_MyGraph : public AActor
+{
+    GENERATED_BODY()
+
+public:
+    // Переменные, созданные в редакторе
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables")
+    float MyFloatValue;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables")
+    bool bMyFlag;
+
+    // Функции (ноды преобразуются в UFUNCTION)
+    UFUNCTION(BlueprintCallable, Category = "Logic")
+    void ExecuteMyLogic();
+};
+```
+
+Режим В: Экспорт как JSON + импортер для UE5 (Python скрипт)
+
+Сгенерируй .json файл + приложи Python скрипт для Unreal Editor, который:
+
+· Читает этот JSON
+· Создает Blueprint
+· Создает ноды внутри Blueprint на основе данных из JSON
+· Расставляет соединения
+
+---
+
+4. Инструкция по установке
+
+После экспорта покажи модальное окно с четкими шагами:
+
+Для C++ экспорта:
+
+1. Скопируй файлы .h и .cpp в Source/YourProject/
+2. Пересобери проект (Build)
+3. Используй созданный класс в редакторе
+
+Для JSON + Python импортера:
+
+1. Скопируй .json файл в Content/Blueprints/
+2. Открой Unreal Editor → Tools → Execute Python Script
+3. Загрузи приложенный скрипт import_blueprint.py
+4. Нажми Run — Blueprint появится в Content Browser
+
+---
+
+5. Технические детали реализации
+
+· Используй React + TypeScript
+· reactflow для рендеринга нод
+· zustand или redux для глобального состояния (список переменных, макросов)
+· localStorage для автосохранения текущего графа
+· Кнопки:
+  · New Graph — очистить всё
+  · Save to Project — сохранить в localStorage
+  · Export for UE5 — показать выбор формата (C++ / JSON+Python / Blueprint Text)
+  · Add Variable — создать новую переменную
+  · Create Macro — создать макрос из выделенных нод
+
+---
+
+6. Ожидаемый результат
+
+Дай мне полный код:
+
+· NodeEditorTab.tsx — главный компонент с рендером
+· nodes/ — все типы нод (ExecutionNode, VariableNode, MathNode и т.д.)
+· store/ — управление состоянием переменных, макросов
+· exporters/ — три модуля экспорта (CppExporter, JsonExporter, BlueprintTextExporter)
+· utils/unrealHelpers.ts — вспомогательные функции для генерации UE5-совместимого кода
+· инструкцию по подключению вкладки к существующему приложению
+
+Важно: Сделай так, чтобы после экспорта файл скачивался автоматически с правильным расширением (.cpp, .h, .json, .py), а для .uasset — сгенерируй текстовый файл с инструкцией по импорту через редактор.
+
+---
+
+Почему этот промпт мощнее:
+
+Что добавлено Зачем
+Флаги (UPROPERTY) Чтобы экспорт был не просто JSON, а настоящий UE5-совместимый код с метаданными
+Макросы Позволяет создавать переиспользуемые блоки логики, как в реальном Blueprint
+Execution Pins Без них это просто "калькулятор нод". Execution pins создают полноценную игровую логику
+Типы экспорта (C++ / JSON+Python / BP Text) Дает 3 способа интеграции — от простого к сложному, покрывает 100% случаев
+Конкретные типы нод (Spawn Actor, Line Trace, Cast) Делает редактор реально полезным для геймдева, а не абстрактным прототипом
+.uasset / .cpp / .h расширения Файлы скачиваются с теми же расширениями, что использует UE5 — просто "закинуть в папку и работает"
+
+Скопируйте этот промпт и отправьте в нейросеть — получите готовый редактор, который реально генерирует код для Unreal Engine 5.
